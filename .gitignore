@@ -1,0 +1,55 @@
+# Entornos virtuales
+venv/
+env/
+.venv/
+ENV/
+
+# Archivos generados por Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Archivos de empaquetado y distribución
+dist/
+build/
+*.egg-info/
+.wheel/
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de sistema
+Thumbs.db
+
+# Variables de entorno (¡nunca en el repo!)
+.env
+.env.local
+.env.*.local
+
+# Logs y datos temporales
+*.log
+logs/
+*.tmp
+
+# Archivos de testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Archivos de desarrollo local
+.mypy_cache/
+.ruff_cache/
+.black_cache/

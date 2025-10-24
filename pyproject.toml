@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastapi-maker"
+version = "0.0.1"
+description = "A CLI tool to scaffold FastAPI projects and modules (work in progress)."
+readme = "README.md"
+authors = [{name = "Daryll Lorenzo Alfonso", email = "daryllla77@gmail.com"}]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Code Generators",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "typer>=0.9.0",
+    "fastapi[standard]>=0.100.0",
+    "alembic>=1.10.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["build", "twine"]
+
+[project.urls]
+Homepage = "https://github.com/DaryllLorenzo/fastapi-maker"
+
+[project.scripts]
+fam = "fastapi_maker.cli:app"
