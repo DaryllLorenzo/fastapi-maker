@@ -105,7 +105,7 @@ class BaseMixin:
 
     @declared_attr
     def id(cls):
-        return Column(BigInteger, primarykey=True, autoincrement=True)
+        return Column(BigInteger, primary_key=True, autoincrement=True)
 
     @declared_attr
     def created_at(cls):
