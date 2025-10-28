@@ -16,3 +16,25 @@ Perfect for rapid prototyping or enforcing consistent structure across teams.
 
 - `fam init` → Initialize a new FastAPI project with database, Alembic, CORS, and more.
 - `fam create <entity>` → Generate a full module (e.g., `User`) with:
+
+User/
+
+  ├── user_model.py        # SQLAlchemy ORM model
+
+  ├── user_repository.py   # DB operations
+
+  ├── user_service.py      # Business logic
+
+  ├── user_router.py       # FastAPI routes (auto-added to main.py)
+
+  └── dto/
+
+      ├── user_in_dto.py   # Input validation
+
+      └── user_out_dto.py  # API responses
+
+
+## 📦 Installation (coming soon on PyPI)
+
+```bash
+pip install fastapi-maker
