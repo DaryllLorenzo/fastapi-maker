@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-maker"
-version = "0.0.1"
+version = "0.1.1"
 description = "A CLI tool to scaffold FastAPI projects and modules (work in progress)."
 readme = "README.md"
 authors = [{name = "Daryll Lorenzo Alfonso", email = "daryllla77@gmail.com"}]
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Environment :: Console",
     "Intended Audience :: Developers",
