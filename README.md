@@ -27,11 +27,11 @@ User/
 
   ├── user_router.py       # FastAPI routes (auto-added to main.py)
 
-  └── dto/
+  └── dto /
+    
+        ├── user_in_dto.py   # Input validation
 
-    ├── user_in_dto.py   # Input validation
-
-    └── user_out_dto.py  # API responses
+        └── user_out_dto.py  # API responses
 
 
 ## 📦 Installation (coming soon on PyPI)
