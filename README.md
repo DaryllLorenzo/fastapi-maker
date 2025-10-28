@@ -29,9 +29,9 @@ User/
 
   └── dto/
 
-      ├── user_in_dto.py   # Input validation
+    ├── user_in_dto.py   # Input validation
 
-      └── user_out_dto.py  # API responses
+    └── user_out_dto.py  # API responses
 
 
 ## 📦 Installation (coming soon on PyPI)
