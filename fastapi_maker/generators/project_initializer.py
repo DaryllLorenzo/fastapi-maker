@@ -17,6 +17,7 @@ class ProjectInitializer:
         self._create_database_structure()
         self._create_main_app()
         self._create_alembic_structure()
+        self._create_app_folder()
         self._create_config_files()
 
         typer.echo("✅ Proyecto FastAPI inicializado exitosamente!")
@@ -184,8 +185,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
-from db.database import get_db
-from db.database import engine, Base
+from app.db.database import get_db
+from app.db.database import engine, Base
 
 # Importar modelos aquí cuando los crees
 # from app.usuarios.usuario_model import Usuario
@@ -220,7 +221,7 @@ def health_check(db=Depends(get_db)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 '''
         main_file = self.base_dir / "main.py"
         main_file.write_text(main_content)
@@ -336,7 +337,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from db.database import Base
+from app.db.database import Base
 target_metadata = Base.metadata
 
 def get_url():
@@ -442,7 +443,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from db.database import Base
+from app.db.database import Base
 # Importa tus modelos aquí para que Alembic los detecte
 # from app.usuarios.usuario_model import Usuario
 
@@ -526,6 +527,52 @@ def downgrade() -> None:
         script_mako_file = alembic_dir / "script.py.mako"
         script_mako_file.write_text(script_mako_content)
         typer.echo("📄 Creando archivo: alembic/script.py.mako")
+
+
+    def _create_app_folder(self):
+        """Crear la carpeta app/ con subcarpetas y mover archivos principales"""
+        app_dir = self.base_dir / "app"
+        app_dir.mkdir(exist_ok=True)
+        typer.echo("📁 Creando carpeta: app/")
+
+        # Mover db/ a app/db/ si no está ya dentro de app/
+        old_db = self.base_dir / "db"
+        new_db = app_dir / "db"
+        if old_db.exists() and not new_db.exists():
+            old_db.rename(new_db)
+            typer.echo("📁 Moviendo db/ a app/db/")
+        else:
+            # Si no existe, crearla dentro de app/
+            new_db.mkdir(exist_ok=True)
+            typer.echo("📁 Creando carpeta: app/db/")
+
+        # Mover main.py a app/main.py si no está ya dentro de app/
+        old_main = self.base_dir / "main.py"
+        new_main = app_dir / "main.py"
+        if old_main.exists() and not new_main.exists():
+            old_main.rename(new_main)
+            typer.echo("📄 Moviendo main.py a app/main.py")
+        else:
+            # Si no existe, crear main.py vacío o con contenido básico
+            new_main.write_text('''from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "¡Bienvenido a FastAPI!"}
+''')
+            typer.echo("📄 Creando archivo: app/main.py")
+
+        # Crear carpeta api/ dentro de app/
+        api_dir = app_dir / "api"
+        api_dir.mkdir(exist_ok=True)
+        typer.echo("📁 Creando carpeta: app/api/")
+
+        # Crear app/api/__init__.py
+        (api_dir / "__init__.py").touch()
+        typer.echo("📄 Creando archivo: app/api/__init__.py")
+
 
     def _create_config_files(self):
         """Crear archivos de configuración adicionales"""

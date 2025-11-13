@@ -9,11 +9,11 @@ class EntityGenerator:
     def __init__(self, entity_name: str):
         self.entity_name = entity_name.lower()
         self.entity_class = entity_name.capitalize()
-        self.folder_name = self.entity_class  # Ej: "User"
+        self.folder_name = self.entity_name  # Ej: "User"
 
     def create_structure(self):
         """Crear la estructura completa de la entidad e integrarla en el proyecto"""
-        main_folder = Path(self.folder_name)
+        main_folder = Path("app") / "api" / Path(self.folder_name)
         main_folder.mkdir(exist_ok=True)
         typer.echo(f"📁 Creando carpeta: {self.folder_name}")
 
@@ -53,14 +53,14 @@ class EntityGenerator:
             typer.echo("⚠️  alembic/env.py no encontrado. Saltando.")
             return
     
-        import_line = f"from {self.folder_name}.{self.entity_name}_model import {self.entity_class}\n"
+        import_line = f"from app.api.{self.folder_name}.{self.entity_name}_model import {self.entity_class}\n"
         content = env_path.read_text(encoding="utf-8")
     
         if import_line.strip() in content:
             typer.echo("✅ Modelo ya presente en alembic/env.py")
             return
     
-        # Buscar la línea "from db.database import Base"
+        # Buscar la línea "from app.db.database import Base"
         # e insertar justo después de ella (antes de target_metadata)
         lines = content.splitlines(keepends=True)
         new_lines = []
@@ -68,7 +68,7 @@ class EntityGenerator:
     
         for i, line in enumerate(lines):
             new_lines.append(line)
-            if line.strip() == "from db.database import Base":
+            if line.strip() == "from app.db.database import Base":
                 # Insertar la importación del modelo en la siguiente línea
                 new_lines.append(import_line)
                 inserted = True
@@ -77,17 +77,17 @@ class EntityGenerator:
             env_path.write_text("".join(new_lines), encoding="utf-8")
             typer.echo("🔧 Modelo agregado a alembic/env.py")
         else:
-            typer.echo("⚠️  No se encontró 'from db.database import Base' en alembic/env.py. No se agregó la importación.")
+            typer.echo("⚠️  No se encontró 'from app.db.database import Base' en alembic/env.py. No se agregó la importación.")
 
     def _add_router_to_main(self):
-        main_path = Path("main.py")
+        main_path = Path("app") / Path("main.py")
         if not main_path.exists():
             typer.echo("⚠️  main.py no encontrado. Saltando.")
             return
 
         content = main_path.read_text(encoding="utf-8")
 
-        import_line = f"from {self.folder_name}.{self.entity_name}_router import router as {self.entity_name}_router\n"
+        import_line = f"from app.api.{self.folder_name}.{self.entity_name}_router import router as {self.entity_name}_router\n"
         include_line = f"app.include_router({self.entity_name}_router)\n"
 
         # Añadir importación si no existe
