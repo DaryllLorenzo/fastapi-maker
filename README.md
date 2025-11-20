@@ -33,7 +33,7 @@ User/
 
     └── user_out_dto.py  # API responses
 
-
+- `fam migrate [-m "message"]` → Auto-generate and apply database migrations with Alembic.
 
 ## 📦 Installation (coming soon on PyPI)
 
