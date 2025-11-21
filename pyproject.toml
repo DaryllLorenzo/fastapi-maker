@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-maker"
-version = "0.2.1"
+version = "0.2.1.1"
 description = "A CLI tool to scaffold FastAPI projects and modules (work in progress)."
 readme = "README.md"
 authors = [{name = "Daryll Lorenzo Alfonso", email = "daryllla77@gmail.com"}]

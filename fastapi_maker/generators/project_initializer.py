@@ -10,7 +10,7 @@ class ProjectInitializer:
 
     def create_project_structure(self):
         """Crear la estructura completa del proyecto"""
-        typer.echo("🚀 Inicializando proyecto FastAPI...")
+        typer.echo(" Inicializando proyecto FastAPI...")
 
         self._create_env_file()
         self._create_requirements()
@@ -20,8 +20,8 @@ class ProjectInitializer:
         self._create_app_folder()
         self._create_config_files()
 
-        typer.echo("✅ Proyecto FastAPI inicializado exitosamente!")
-        typer.echo("📝 Next steps:")
+        typer.echo(" Proyecto FastAPI inicializado exitosamente!")
+        typer.echo(" Next steps:")
         typer.echo("   1. Configura tu DATABASE_URL en .env")
         typer.echo("   2. Ejecuta: pip install -r requirements.txt")
         typer.echo("   3. Ejecuta: alembic upgrade head")
@@ -40,8 +40,8 @@ API_V1_STR=/api/v1
 ALLOWED_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
 '''
         env_file = self.base_dir / ".env"
-        env_file.write_text(env_content)
-        typer.echo("📄 Creando archivo: .env")
+        env_file.write_text(env_content, encoding='utf-8')
+        typer.echo(" Creando archivo: .env")
 
     def _create_requirements(self):
         """Crear requirements.txt"""
@@ -56,14 +56,14 @@ psycopg2-binary>=2.9.0  # Para PostgreSQL
 # mysqlclient>=2.0.0    # Para MySQL
 '''
         requirements_file = self.base_dir / "requirements.txt"
-        requirements_file.write_text(requirements_content)
-        typer.echo("📄 Creando archivo: requirements.txt")
+        requirements_file.write_text(requirements_content, encoding='utf-8')
+        typer.echo(" Creando archivo: requirements.txt")
 
     def _create_database_structure(self):
         """Crear estructura de base de datos"""
         db_dir = self.base_dir / "db"
         db_dir.mkdir(exist_ok=True)
-        typer.echo("📁 Creando carpeta: db/")
+        typer.echo(" Creando carpeta: db/")
 
         # database.py - Configuración principal de BD
         database_content = '''from sqlalchemy import create_engine
@@ -93,8 +93,8 @@ def get_db():
         db.close()
 '''
         database_file = db_dir / "database.py"
-        database_file.write_text(database_content)
-        typer.echo("📄 Creando archivo: db/database.py")
+        database_file.write_text(database_content, encoding='utf-8')
+        typer.echo(" Creando archivo: db/database.py")
 
         # base_mixin.py - Clase base para modelos
         base_mixin_content = '''from sqlalchemy import Column, BigInteger, DateTime
@@ -121,14 +121,14 @@ class BaseMixin:
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 '''
         base_mixin_file = db_dir / "base_mixin.py"
-        base_mixin_file.write_text(base_mixin_content)
-        typer.echo("📄 Creando archivo: db/base_mixin.py")
+        base_mixin_file.write_text(base_mixin_content, encoding='utf-8')
+        typer.echo(" Creando archivo: db/base_mixin.py")
 
         # seeders/__init__.py
         seeders_dir = db_dir / "seeders"
         seeders_dir.mkdir(exist_ok=True)
         (seeders_dir / "__init__.py").touch()
-        typer.echo("📁 Creando carpeta: db/seeders/")
+        typer.echo(" Creando carpeta: db/seeders/")
 
         # seeders/base_seeder.py
         base_seeder_content = '''from sqlalchemy.orm import Session
@@ -160,15 +160,15 @@ class BaseSeeder:
                     db.add(self.model(**item_data))
 
             db.commit()
-            logger.info(f"✅ Seeder para {self.model.__name__} ejecutado correctamente")
+            logger.info(f" Seeder para {self.model.__name__} ejecutado correctamente")
         except Exception as e:
             db.rollback()
-            logger.error(f"❌ Error en seeder para {self.model.__name__}: {e}")
+            logger.error(f" Error en seeder para {self.model.__name__}: {e}")
             raise
 '''
         base_seeder_file = seeders_dir / "base_seeder.py"
-        base_seeder_file.write_text(base_seeder_content)
-        typer.echo("📄 Creando archivo: db/seeders/base_seeder.py")
+        base_seeder_file.write_text(base_seeder_content, encoding='utf-8')
+        typer.echo(" Creando archivo: db/seeders/base_seeder.py")
 
         # seeders/__init__.py con imports
         seeders_init_content = '''from .base_seeder import BaseSeeder
@@ -176,7 +176,7 @@ class BaseSeeder:
 __all__ = ["BaseSeeder"]
 '''
         seeders_init_file = seeders_dir / "__init__.py"
-        seeders_init_file.write_text(seeders_init_content)
+        seeders_init_file.write_text(seeders_init_content, encoding='utf-8')
 
     def _create_main_app(self):
         """Crear archivo principal de FastAPI"""
@@ -224,8 +224,8 @@ if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 '''
         main_file = self.base_dir / "main.py"
-        main_file.write_text(main_content)
-        typer.echo("📄 Creando archivo: main.py")
+        main_file.write_text(main_content, encoding='utf-8')
+        typer.echo(" Creando archivo: main.py")
 
     def _find_venv_python(self) -> Path:
         """Busca el ejecutable de Python dentro del entorno virtual en el proyecto."""
@@ -244,10 +244,10 @@ if __name__ == "__main__":
 
     def _create_alembic_structure(self):
         """Inicializa Alembic usando `alembic init` desde el entorno virtual."""
-        typer.echo("⚙️  Inicializando Alembic con `alembic init`...")
+        typer.echo("  Inicializando Alembic con `alembic init`...")
 
         python_exe = self._find_venv_python()
-        typer.echo(f"🐍 Usando Python: {python_exe}")
+        typer.echo(f" Usando Python: {python_exe}")
 
         # Verificar que Alembic esté instalado
         try:
@@ -257,14 +257,14 @@ if __name__ == "__main__":
                 capture_output=True
             )
         except subprocess.CalledProcessError:
-            typer.echo("⚠️  Alembic no está instalado. Asegúrate de ejecutar `pip install -r requirements.txt` primero.")
+            typer.echo("  Alembic no está instalado. Asegúrate de ejecutar `pip install -r requirements.txt` primero.")
             typer.echo("   Creando estructura manual como fallback...")
             self._create_alembic_structure_manual()
             return
 
         alembic_dir = self.base_dir / "alembic"
         if alembic_dir.exists():
-            typer.echo("⚠️  La carpeta 'alembic/' ya existe. Saltando `alembic init`.")
+            typer.echo("  La carpeta 'alembic/' ya existe. Saltando `alembic init`.")
         else:
             try:
                 subprocess.run(
@@ -274,9 +274,9 @@ if __name__ == "__main__":
                     capture_output=True,
                     text=True
                 )
-                typer.echo("✅ `alembic init` ejecutado exitosamente.")
+                typer.echo(" `alembic init` ejecutado exitosamente.")
             except subprocess.CalledProcessError as e:
-                typer.echo(f"❌ Error al ejecutar `alembic init`: {e.stderr}")
+                typer.echo(f" Error al ejecutar `alembic init`: {e.stderr}")
                 typer.echo("   Creando estructura manual como fallback...")
                 self._create_alembic_structure_manual()
                 return
@@ -315,8 +315,8 @@ formatter = generic
 format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
 '''
-        (self.base_dir / "alembic.ini").write_text(alembic_ini_content)
-        typer.echo("📄 Personalizando: alembic.ini")
+        (self.base_dir / "alembic.ini").write_text(alembic_ini_content, encoding='utf-8')
+        typer.echo(" Personalizando: alembic.ini")
 
         # alembic/env.py
         env_py_content = '''from logging.config import fileConfig
@@ -374,8 +374,8 @@ if context.is_offline_mode():
 else:
     run_migrations_online()
 '''
-        (self.base_dir / "alembic" / "env.py").write_text(env_py_content)
-        typer.echo("📄 Personalizando: alembic/env.py")
+        (self.base_dir / "alembic" / "env.py").write_text(env_py_content, encoding='utf-8')
+        typer.echo(" Personalizando: alembic/env.py")
 
     def _create_alembic_structure_manual(self):
         """Versión manual (tu implementación original) por si falla `alembic init`."""
@@ -408,16 +408,16 @@ format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
 '''
         alembic_ini_file = self.base_dir / "alembic.ini"
-        alembic_ini_file.write_text(alembic_ini_content)
-        typer.echo("📄 Creando archivo: alembic.ini")
+        alembic_ini_file.write_text(alembic_ini_content, encoding='utf-8')
+        typer.echo(" Creando archivo: alembic.ini")
 
         alembic_dir = self.base_dir / "alembic"
         alembic_dir.mkdir(exist_ok=True)
-        typer.echo("📁 Creando carpeta: alembic/")
+        typer.echo(" Creando carpeta: alembic/")
 
         versions_dir = alembic_dir / "versions"
         versions_dir.mkdir(exist_ok=True)
-        typer.echo("📁 Creando carpeta: alembic/versions/")
+        typer.echo(" Creando carpeta: alembic/versions/")
 
         env_py_content = '''from logging.config import fileConfig
 from sqlalchemy import engine_from_config
@@ -496,8 +496,8 @@ else:
     run_migrations_online()
 '''
         env_py_file = alembic_dir / "env.py"
-        env_py_file.write_text(env_py_content)
-        typer.echo("📄 Creando archivo: alembic/env.py")
+        env_py_file.write_text(env_py_content, encoding='utf-8')
+        typer.echo(" Creando archivo: alembic/env.py")
 
         script_mako_content = '''"""${message}
 
@@ -525,33 +525,33 @@ def downgrade() -> None:
     ${downgrades if downgrades else "pass"}
 '''
         script_mako_file = alembic_dir / "script.py.mako"
-        script_mako_file.write_text(script_mako_content)
-        typer.echo("📄 Creando archivo: alembic/script.py.mako")
+        script_mako_file.write_text(script_mako_content, encoding='utf-8')
+        typer.echo(" Creando archivo: alembic/script.py.mako")
 
 
     def _create_app_folder(self):
         """Crear la carpeta app/ con subcarpetas y mover archivos principales"""
         app_dir = self.base_dir / "app"
         app_dir.mkdir(exist_ok=True)
-        typer.echo("📁 Creando carpeta: app/")
+        typer.echo(" Creando carpeta: app/")
 
         # Mover db/ a app/db/ si no está ya dentro de app/
         old_db = self.base_dir / "db"
         new_db = app_dir / "db"
         if old_db.exists() and not new_db.exists():
             old_db.rename(new_db)
-            typer.echo("📁 Moviendo db/ a app/db/")
+            typer.echo(" Moviendo db/ a app/db/")
         else:
             # Si no existe, crearla dentro de app/
             new_db.mkdir(exist_ok=True)
-            typer.echo("📁 Creando carpeta: app/db/")
+            typer.echo(" Creando carpeta: app/db/")
 
         # Mover main.py a app/main.py si no está ya dentro de app/
         old_main = self.base_dir / "main.py"
         new_main = app_dir / "main.py"
         if old_main.exists() and not new_main.exists():
             old_main.rename(new_main)
-            typer.echo("📄 Moviendo main.py a app/main.py")
+            typer.echo(" Moviendo main.py a app/main.py")
         else:
             # Si no existe, crear main.py vacío o con contenido básico
             new_main.write_text('''from fastapi import FastAPI
@@ -561,17 +561,17 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "¡Bienvenido a FastAPI!"}
-''')
-            typer.echo("📄 Creando archivo: app/main.py")
+''', encoding='utf-8')
+            typer.echo(" Creando archivo: app/main.py")
 
         # Crear carpeta api/ dentro de app/
         api_dir = app_dir / "api"
         api_dir.mkdir(exist_ok=True)
-        typer.echo("📁 Creando carpeta: app/api/")
+        typer.echo(" Creando carpeta: app/api/")
 
         # Crear app/api/__init__.py
         (api_dir / "__init__.py").touch()
-        typer.echo("📄 Creando archivo: app/api/__init__.py")
+        typer.echo(" Creando archivo: app/api/__init__.py")
 
 
     def _create_config_files(self):
@@ -621,8 +621,8 @@ alembic/versions/*
 *.log
 '''
         gitignore_file = self.base_dir / ".gitignore"
-        gitignore_file.write_text(gitignore_content)
-        typer.echo("📄 Creando archivo: .gitignore")
+        gitignore_file.write_text(gitignore_content, encoding='utf-8')
+        typer.echo(" Creando archivo: .gitignore")
 
         # README.md
         readme_content = '''# FastAPI Project
