@@ -1,3 +1,16 @@
+"""
+Punto de entrada de la CLI de FastAPI Maker (`fam`).
+
+Comandos disponibles:
+- `fam init`: Inicializa la estructura base del proyecto FastAPI.
+- `fam create <nombre> [campos...]`: Crea una nueva entidad CRUD con campos personalizados.
+- `fam migrate`: Ejecuta migraciones de Alembic.
+
+Ejemplo de uso:
+    fam create user *name:str email:str age:int is_active:bool
+        → Crea entidad 'User' con 'name' obligatorio y el resto opcionales.
+"""
+
 from fastapi_maker.generators.entity_generator import EntityGenerator
 import typer
 import os
@@ -12,20 +25,34 @@ app = typer.Typer(
 
 @app.command()
 def init():
-    """Inicializar la estructura base del proyecto FastAPI"""
+    """Inicializa la estructura base del proyecto FastAPI (carpetas, archivos base, etc.)."""
     initializer = ProjectInitializer()
     initializer.create_project_structure()
 
 @app.command()
-def create(nombre: str):
-    """Crear estructura de carpeta y archivos para una entidad"""
-    generator = EntityGenerator(nombre)
+def create(nombre: str, campos: list[str] = typer.Argument(None, help="Lista de campos en formato: *nombre:tipo (obligatorio) o nombre:tipo (opcional)")):
+    """
+    Crea una nueva entidad CRUD con campos personalizados.
+
+    - Usa * delante del nombre para marcarlo como obligatorio.
+    - Si no se especifican campos, se usa por defecto: *name:str
+
+    Ejemplos:
+        fam create user *name:str email:str
+        fam create post *title:str content:text published:bool
+    """
+    # Si no se pasan campos, usamos el valor por defecto
+    if campos is None:
+        campos = ["*name:str"]
+    generator = EntityGenerator(nombre, campos)
     generator.create_structure()
 
 @app.command()
-def migrate(message: str = typer.Option(None, "-m", "--message", help="Mensaje para la migración")):
-    """Aplicar migraciones de alembic."""
-    # Llama al método de la clase para manejar la lógica
+def migrate(message: str = typer.Option(None, "-m", "--message", help="Mensaje descriptivo para la migración de Alembic.")):
+    """
+    Ejecuta las migraciones pendientes de Alembic en la base de datos.
+    Opcionalmente, permite especificar un mensaje para la nueva migración.
+    """
     MigrationManager.run_migrations(message=message)
 
 if __name__ == "__main__":
