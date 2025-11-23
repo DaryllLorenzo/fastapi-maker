@@ -1,4 +1,12 @@
 # templates/entity_templates.py
+
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 """
 Módulo que define las plantillas de código para generar una entidad CRUD.
 

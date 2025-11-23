@@ -1,3 +1,10 @@
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 """
 Punto de entrada de la CLI de FastAPI Maker (`fam`).
 

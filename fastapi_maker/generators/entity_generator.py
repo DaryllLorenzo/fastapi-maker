@@ -1,4 +1,12 @@
 # generators/entity_generator.py
+
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 """
 Clase principal que orquesta la generación de una entidad CRUD completa.
 

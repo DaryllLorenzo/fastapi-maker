@@ -80,7 +80,7 @@ app/api/user/
 
 ---
 
-## 📦 Installation (coming soon on PyPI)
+## 📦 Installation
 
 ```bash
 pip install fastapi-maker

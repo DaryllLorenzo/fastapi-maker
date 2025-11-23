@@ -1,3 +1,10 @@
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 SQLALCHEMY_TYPE_MAP = {
     "str": "String(255)",
     "text": "Text",

@@ -1,3 +1,10 @@
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 EXAMPLE_VALUES = {
     "str": '"Sample Name"',
     "text": '"A detailed description of the entity..."',
