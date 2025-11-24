@@ -31,12 +31,23 @@ class ProjectInitializer:
         typer.echo(" Next steps:")
         typer.echo("   1. Configura tu DATABASE_URL en .env")
         typer.echo("   2. Ejecuta: pip install -r requirements.txt")
-        typer.echo("   3. Ejecuta: alembic upgrade head")
+        typer.echo("   3. Ejecuta: fam create <entidad>")
+        typer.echo("   4. Ejecuta: fam migrate")
 
     def _create_env_file(self):
         """Crear archivo .env"""
         env_content = '''# Database
 DATABASE_URL=sqlite:///./app.db
+
+# Examples
+# SQLite
+#DATABASE_URL=sqlite:///./app.db
+
+# PostgreSQL
+#DATABASE_URL=postgresql://usuario:password@localhost:5432/mi_app_db
+
+# MySQL
+#DATABASE_URL=mysql://usuario:password@localhost:3306/mi_app_db
 
 # App Settings
 DEBUG=true
@@ -59,7 +70,7 @@ alembic>=1.12.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.6
 pydantic>=2.0.0
-psycopg2-binary>=2.9.0  # Para PostgreSQL
+#psycopg2-binary>=2.9.0  # Para PostgreSQL
 # mysqlclient>=2.0.0    # Para MySQL
 '''
         requirements_file = self.base_dir / "requirements.txt"
@@ -104,7 +115,8 @@ def get_db():
         typer.echo(" Creando archivo: db/database.py")
 
         # base_mixin.py - Clase base para modelos
-        base_mixin_content = '''from sqlalchemy import Column, BigInteger, DateTime
+        base_mixin_content = '''
+from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
 
@@ -113,7 +125,7 @@ class BaseMixin:
 
     @declared_attr
     def id(cls):
-        return Column(BigInteger, primary_key=True, autoincrement=True)
+        return Column(Integer, primary_key=True, autoincrement=True)
 
     @declared_attr
     def created_at(cls):
@@ -187,28 +199,39 @@ __all__ = ["BaseSeeder"]
 
     def _create_main_app(self):
         """Crear archivo principal de FastAPI"""
-        main_content = '''from fastapi import FastAPI, Depends
+        main_content = '''
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_standalone_docs import StandaloneDocs
+from app.core.openapi_config import setup_custom_openapi
 import os
 from dotenv import load_dotenv
 
 from app.db.database import get_db
-from app.db.database import engine, Base
-
-# Importar modelos aquí cuando los crees
-# from app.usuarios.usuario_model import Usuario
-
-# Crear tablas
-Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
 app = FastAPI(
     title="FastAPI App",
     description="API generada con FastAPI Maker",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",  # definir docs_url
+    redoc_url="/redoc"  # Opcional: definir redoc_url si quieres ReDoc
 )
 
+# Configurar documentación offline
+# By default, the library will use the FastAPI favicons, and they're served from {docs_url}/fastapi/favicon.png and
+# {redoc_url}/fastapi/favicon.png. You can use your own favicons like this, which will also disable the FastAPI icons:
+StandaloneDocs(
+    app=app,
+    #redoc_favicon_url="/favicon.png", 
+    #swagger_favicon_url="/favicon.png",
+)
+
+# Configurar OpenAPI personalizado (endpoints ordenados)
+setup_custom_openapi(app)
+
+        
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -229,10 +252,55 @@ def health_check(db=Depends(get_db)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
-'''
+    '''
         main_file = self.base_dir / "main.py"
         main_file.write_text(main_content, encoding='utf-8')
         typer.echo(" Creando archivo: main.py")
+
+    def _create_openapi_config(self):
+        """Crear configuración personalizada para OpenAPI"""
+        openapi_config_content = '''
+from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
+from typing import Dict, Any
+
+def custom_openapi(app: FastAPI) -> Dict[str, Any]:
+    """
+    Configuración personalizada de OpenAPI que ordena los endpoints alfabéticamente
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    # Ordenar paths alfabéticamente
+    sorted_paths = dict(sorted(openapi_schema.get("paths", {}).items()))
+    openapi_schema["paths"] = sorted_paths
+
+    # Ordenar también los métodos dentro de cada path
+    for path, methods in openapi_schema["paths"].items():
+        sorted_methods = dict(sorted(methods.items()))
+        openapi_schema["paths"][path] = sorted_methods
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+def setup_custom_openapi(app: FastAPI):
+    """Configura el esquema OpenAPI personalizado en la aplicación"""
+    app.openapi = lambda: custom_openapi(app)
+    '''
+
+        config_dir = self.base_dir / "app" / "core"
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        openapi_file = config_dir / "openapi_config.py"
+        openapi_file.write_text(openapi_config_content, encoding='utf-8')
+        typer.echo(" Creando archivo: app/core/openapi_config.py")
 
     def _find_venv_python(self) -> Path:
         """Busca el ejecutable de Python dentro del entorno virtual en el proyecto."""
@@ -553,6 +621,11 @@ def downgrade() -> None:
             new_db.mkdir(exist_ok=True)
             typer.echo(" Creando carpeta: app/db/")
 
+        # Crear carpeta core/ para configuración
+        core_dir = app_dir / "core"
+        core_dir.mkdir(exist_ok=True)
+        typer.echo(" Creando carpeta: app/core/")
+
         # Mover main.py a app/main.py si no está ya dentro de app/
         old_main = self.base_dir / "main.py"
         new_main = app_dir / "main.py"
@@ -562,8 +635,10 @@ def downgrade() -> None:
         else:
             # Si no existe, crear main.py vacío o con contenido básico
             new_main.write_text('''from fastapi import FastAPI
+                                from fastapi_standalone_docs import StandaloneDocs
 
 app = FastAPI()
+StandaloneDocs(app=app)
 
 @app.get("/")
 def read_root():
@@ -580,9 +655,17 @@ def read_root():
         (api_dir / "__init__.py").touch()
         typer.echo(" Creando archivo: app/api/__init__.py")
 
+        # Crear app/core/__init__.py
+        (core_dir / "__init__.py").touch()
+        typer.echo(" Creando archivo: app/core/__init__.py")
+
 
     def _create_config_files(self):
         """Crear archivos de configuración adicionales"""
+
+        # Crear configuración de OpenAPI
+        self._create_openapi_config()
+        
         # .gitignore
         gitignore_content = '''# Environment
 .env

@@ -84,38 +84,38 @@ class EntityGenerator:
         """Orquesta la creación completa de la entidad."""
         main_folder = Path("app") / "api" / Path(self.folder_name)
         main_folder.mkdir(exist_ok=True)
-        typer.echo(f" ➤ Creando carpeta: {self.folder_name}")
+        typer.echo(f"  Creando carpeta: {self.folder_name}")
 
         self._create_main_files(main_folder)
         self._create_dto_files(main_folder)
         self._add_model_to_alembic_env()
         self._add_router_to_main()
 
-        typer.echo(f" ✅ Entidad '{self.entity_class}' generada e integrada correctamente.")
+        typer.echo(f"  Entidad '{self.entity_class}' generada e integrada correctamente.")
 
     def _create_main_files(self, folder: Path):
         """Genera los archivos principales: modelo, repositorio, servicio y router."""
         templates = get_main_templates(self.entity_name, self.fields)
         for filename, content in templates.items():
             (folder / filename).write_text(content, encoding="utf-8")
-            typer.echo(f"   ➤ Creando archivo: {filename}")
+            typer.echo(f"    Creando archivo: {filename}")
 
     def _create_dto_files(self, folder: Path):
         """Genera los archivos DTO (Pydantic) dentro de una subcarpeta 'dto'."""
         dto_folder = folder / "dto"
         dto_folder.mkdir(exist_ok=True)
-        typer.echo(f"   ➤ Creando subcarpeta: dto/")
+        typer.echo(f"    Creando subcarpeta: dto/")
 
         templates = get_dto_templates(self.entity_name, self.fields)
         for filename, content in templates.items():
             (dto_folder / filename).write_text(content, encoding="utf-8")
-            typer.echo(f"   ➤ Creando archivo: dto/{filename}")
+            typer.echo(f"    Creando archivo: dto/{filename}")
 
     def _add_model_to_alembic_env(self):
         """Añade la importación del modelo a alembic/env.py para que Alembic lo detecte."""
         env_path = Path("alembic") / "env.py"
         if not env_path.exists():
-            typer.echo("   ⚠️  alembic/env.py no encontrado. Saltando integración con Alembic.")
+            typer.echo("     alembic/env.py no encontrado. Saltando integración con Alembic.")
             return
 
         import_line = f"from app.api.{self.folder_name}.{self.entity_name}_model import {self.entity_class}\n"
@@ -123,7 +123,7 @@ class EntityGenerator:
 
         # Evitar importaciones duplicadas
         if import_line.strip() in content:
-            typer.echo("   ➤ Modelo ya presente en alembic/env.py")
+            typer.echo("    Modelo ya presente en alembic/env.py")
             return
 
         lines = content.splitlines(keepends=True)
@@ -138,15 +138,15 @@ class EntityGenerator:
 
         if inserted:
             env_path.write_text("".join(new_lines), encoding="utf-8")
-            typer.echo("   ➤ Modelo agregado a alembic/env.py")
+            typer.echo("    Modelo agregado a alembic/env.py")
         else:
-            typer.echo("   ⚠️  No se encontró 'from app.db.database import Base' en alembic/env.py. No se agregó la importación.")
+            typer.echo("     No se encontró 'from app.db.database import Base' en alembic/env.py. No se agregó la importación.")
 
     def _add_router_to_main(self):
         """Registra el router de la entidad en app/main.py."""
         main_path = Path("app") / "main.py"
         if not main_path.exists():
-            typer.echo("   ⚠️  app/main.py no encontrado. Saltando registro del router.")
+            typer.echo("     app/main.py no encontrado. Saltando registro del router.")
             return
 
         content = main_path.read_text(encoding="utf-8")
@@ -163,7 +163,7 @@ class EntityGenerator:
                 idx = next(i for i, line in enumerate(lines) if app_line in line)
                 lines.insert(idx, import_line)
                 content = "".join(lines)
-                typer.echo("   ➤ Router importado en app/main.py")
+                typer.echo("    Router importado en app/main.py")
 
         # Añadir include si no existe
         if include_line.strip() not in content:
@@ -175,4 +175,4 @@ class EntityGenerator:
             else:
                 content += f"\n{include_line}"
             main_path.write_text(content, encoding="utf-8")
-            typer.echo("   ➤ Router incluido en la aplicación FastAPI")
+            typer.echo("    Router incluido en la aplicación FastAPI")

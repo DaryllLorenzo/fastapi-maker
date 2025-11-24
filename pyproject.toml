@@ -23,6 +23,7 @@ dependencies = [
     "fastapi[standard]>=0.100.0",
     "alembic>=1.10.0",
     "python-dotenv>=1.0.0",
+    "fastapi-standalone-docs>=0.2.0"
 ]
 
 [project.optional-dependencies]

@@ -1,6 +1,6 @@
 # fastapi-maker
 
-> 🚀 **FastAPI project scaffolding CLI** – Generate production-ready CRUD modules in seconds with explicit field requirements, realistic examples, and clean Swagger documentation.
+> 🚀 **FastAPI project scaffolding CLI** – Generate production-ready CRUD modules in seconds with explicit field requirements, realistic examples, and clean **offline Swagger documentation**.
 
 A powerful command-line tool to bootstrap and scale FastAPI applications with a clean, maintainable architecture:
 
@@ -9,6 +9,7 @@ A powerful command-line tool to bootstrap and scale FastAPI applications with a 
 - **Repository + Service** pattern for separation of concerns
 - **Routers** auto-registered in `main.py` with clean path parameters
 - **Alembic** pre-configured with models auto-imported
+- **Offline API Documentation** with Swagger UI and ReDoc (no CDN required)
 - Environment management via `.env` for example:
 ```python
 import os
@@ -27,9 +28,16 @@ Perfect for rapid prototyping, MVP development, or enforcing consistent structur
 ## ✨ Features
 
 ### Core Commands
-- `fam init` → Initialize a new FastAPI project with database, Alembic, CORS, logging, and more.
+- `fam init` → Initialize a new FastAPI project with database, Alembic, CORS, logging, and **offline documentation**
 - `fam create <entity> [fields...]` → Generate a full CRUD module with customizable fields
 - `fam migrate [-m "message"]` → Auto-generate and apply database migrations with Alembic
+
+### 🛡️ Offline API Documentation
+- **Zero CDN dependencies** - All Swagger UI and ReDoc assets served locally
+- **Privacy-focused** - No external network requests for documentation
+- **Fast loading** - Documentation works without internet connection
+- **Customizable** - Easy to configure themes and favicons
+- **Powered by** [`fastapi-standalone-docs`](https://github.com/ioxiocom/fastapi-standalone-docs) - Visit for advanced configuration options
 
 ### Smart Field Definition Syntax
 Define **required** vs **optional** fields using intuitive syntax:
@@ -72,6 +80,13 @@ app/api/user/
 - **Realistic examples**: Type-specific values (`"user@example.com"`, `42`, `true`) instead of generic placeholders
 - **Full visibility**: All fields appear in schema documentation, even optional ones
 - **Accurate nullability**: Optional fields correctly marked as nullable in responses
+- **Offline functionality**: Documentation works completely offline using local assets
+
+### Database Support & Migrations
+- **Multi-database support**: SQLite, PostgreSQL, and MySQL
+- **Auto-database creation**: Automatically creates database if it doesn't exist
+- **Smart migrations**: Alembic configured with environment-based settings
+- **SQLite compatibility**: Proper handling of autoincrement primary keys
 
 ### Safe Data Handling
 - **OutDTOs accept `None`** for optional fields → prevents validation errors when DB returns `NULL`
@@ -89,7 +104,7 @@ pip install fastapi-maker
 ## 🚀 Quick Start
 
 ```bash
-# Initialize a new project
+# Initialize a new project with offline documentation
 fam init
 
 # Create a User entity with required name and optional fields
@@ -98,15 +113,75 @@ fam create user *name:str email:str age:int is_active:bool
 # Create an Animal entity with only a required name
 fam create animal *name:str
 
-# Run database migrations
+# Run database migrations (auto-creates database if needed)
 fam migrate -m "Add user and animal tables"
 
-# Start your FastAPI app
+# Start your FastAPI app with offline documentation
 python3 -m app.main
 ```
 
-Then visit `http://localhost:8000/docs` to see your auto-generated, fully-documented API!
+Then visit `http://localhost:8000/docs` to see your auto-generated, fully-documented API - **completely offline!**
+
+---
+
+## 🔧 Advanced Configuration
+
+### Offline Documentation Customization
+The generated project uses [`fastapi-standalone-docs`](https://github.com/ioxiocom/fastapi-standalone-docs) for offline documentation. You can customize it in `app/main.py`:
+
+```python
+from fastapi_standalone_docs import StandaloneDocs
+
+app = FastAPI()
+
+# Basic configuration (included by default)
+StandaloneDocs(app=app)
+
+# Advanced configuration
+StandaloneDocs(
+    app=app,
+    redoc_favicon_url="/custom-favicon.png",  # Custom favicon
+    swagger_favicon_url="/custom-favicon.png",
+    with_google_fonts=True,  # Enable Google Fonts (disabled by default)
+)
+```
+
+### Database Configuration
+Supported database URLs in your `.env` file:
+```bash
+# SQLite (default)
+DATABASE_URL=sqlite:///./app.db
+
+# PostgreSQL
+DATABASE_URL=postgresql://user:password@localhost:5432/mydatabase
+
+# MySQL
+DATABASE_URL=mysql://user:password@localhost:3306/mydatabase
+```
+
+## 🎯 Use Cases
+
+- **Rapid Prototyping**: Go from idea to working API in minutes
+- **MVP Development**: Perfect for startups and hackathons
+- **Team Consistency**: Enforce clean architecture across engineering teams
+- **Learning FastAPI**: Excellent for understanding FastAPI best practices
+- **Production APIs**: Solid foundation for scalable applications
+
+## 🤝 Contributing
+
+We welcome contributions! Feel free to:
+- Report bugs and suggest features
+- Submit pull requests
+- Improve documentation
+- Share your use cases
+
+## 📄 License
+
+MIT License - feel free to use in commercial projects.
 
 ---
 
 > 💡 **Pro Tip**: Use `*` prefix to mark fields as required — everything else is optional by default. Your API consumers will thank you for the clarity!
+
+> 🌐 **Documentation Note**: Your API docs work completely offline thanks to `fastapi-standalone-docs`. Perfect for development in restricted environments or when privacy matters!
+```
