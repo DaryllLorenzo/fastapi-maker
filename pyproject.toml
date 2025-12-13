@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-maker"
-version = "0.2.2"
+version = "0.2.3"
 description = "A CLI tool to scaffold FastAPI projects and modules (work in progress)."
 readme = "README.md"
 authors = [{name = "Daryll Lorenzo Alfonso", email = "daryllla77@gmail.com"}]
@@ -23,7 +23,8 @@ dependencies = [
     "fastapi[standard]>=0.100.0",
     "alembic>=1.10.0",
     "python-dotenv>=1.0.0",
-    "fastapi-standalone-docs>=0.2.0"
+    "fastapi-standalone-docs>=0.2.0",
+    "questionary>=2.1.1"
 ]
 
 [project.optional-dependencies]

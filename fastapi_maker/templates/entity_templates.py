@@ -27,7 +27,6 @@ from fastapi_maker.utils.pydantic_type_map import PYDANTIC_TYPE_MAP
 from fastapi_maker.utils.pydantic_imports import PYDANTIC_IMPORTS
 from fastapi_maker.utils.example_values import EXAMPLE_VALUES
 
-
 # ============================================================================
 # FUNCIONES AUXILIARES
 # ============================================================================
@@ -67,16 +66,6 @@ def _generate_update_dto_fields(fields: List[Dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def _generate_out_dto_fields(fields: List[Dict[str, str]]) -> str:
-    lines = ["    id: int = Field(..., description=\"Unique identifier\", example=1)"]
-    for field in fields:
-        py_type = PYDANTIC_TYPE_MAP[field["type"]]
-        lines.append(f'    {field["name"]}: {py_type} | None = None')
-    lines.append('    created_at: datetime = Field(..., description="Creation timestamp")')
-    lines.append('    updated_at: datetime = Field(..., description="Last update timestamp")')
-    return "\n".join(lines)
-
-
 def _get_pydantic_imports(fields: List[Dict[str, str]]) -> str:
     imports = set()
     for field in fields:
@@ -95,10 +84,25 @@ def _build_example_dict(fields: List[Dict[str, str]]) -> str:
         return "{}"
     return ",\n".join(f'                {item}' for item in items)
 
+def _generate_out_dto_fields(fields: List[Dict[str, str]]) -> str:
+    """Genera campos para el DTO de salida, incluyendo ID y timestamps."""
+    lines = ["    id: int = Field(..., description=\"Unique identifier\", example=1)"]
+    for field in fields:
+        py_type = PYDANTIC_TYPE_MAP[field["type"]]
+        lines.append(f'    {field["name"]}: {py_type} | None = None')
+    lines.append('    created_at: datetime = Field(..., description="Creation timestamp")')
+    lines.append('    updated_at: datetime = Field(..., description="Last update timestamp")')
+    
+    # Espacio para relaciones que se agregarán después (como IDs)
+    lines.append('\n    # Relationship IDs (will be added by relation manager)')
+    return "\n".join(lines)
+
 
 # ============================================================================
 # FUNCIONES PRINCIPALES
 # ============================================================================
+
+# templates/entity_templates.py (versión completa y corregida)
 
 def get_main_templates(entity_name: str, fields: List[Dict[str, str]]) -> dict:
     entity_class = entity_name.capitalize()
@@ -118,6 +122,7 @@ def get_main_templates(entity_name: str, fields: List[Dict[str, str]]) -> dict:
     return {
         f"{entity_name}_model.py": f'''# ORM Model for {entity_name}
 from sqlalchemy import Column, Integer, String, Text, Boolean, Date, DateTime, Float, BigInteger
+from sqlalchemy.orm import relationship
 from app.db.database import Base
 from app.db.base_mixin import BaseMixin
 
@@ -127,6 +132,8 @@ class {entity_class}(Base, BaseMixin):
     __tablename__ = "{entity_name.lower()}s"
     
 {model_fields}
+    
+    # Relationships will be added here by relation manager
 ''',
 
         f"{entity_name}_repository.py": f'''# Repository for {entity_name}
@@ -138,6 +145,7 @@ from .{entity_name}_model import {entity_class}
 class {entity_class}Repository:
     def __init__(self, db: Session):
         self.db = db
+        self.model = {entity_class}
 
     def get_all(self) -> List[{entity_class}]:
         return self.db.query({entity_class}).all()
@@ -185,31 +193,50 @@ class {entity_class}Service:
     def __init__(self, repository: {entity_class}Repository):
         self.repository = repository
     
+    def model_to_dto(self, entity: {entity_class}) -> Optional[{entity_class}OutDto]:
+        """Convierte un modelo a DTO, incluyendo campos básicos."""
+        if not entity:
+            return None
+        
+        # Convertir el modelo a diccionario usando to_dict si existe
+        if hasattr(entity, 'to_dict'):
+            dto_dict = entity.to_dict()
+        else:
+            # Alternativa: convertir atributos manualmente
+            dto_dict = {{}}
+            for column in entity.__table__.columns:
+                dto_dict[column.name] = getattr(entity, column.name)
+        
+        # Nota: Las relaciones (IDs) se agregarán automáticamente
+        # por el relation_manager cuando se cree una relación
+        
+        return {entity_class}OutDto(**dto_dict)
+    
     def get_all_{entity_name}s(self) -> List[{entity_class}OutDto]:
         entities = self.repository.get_all()
-        return [{entity_class}OutDto.model_validate(entity) for entity in entities]
+        return [self.model_to_dto(entity) for entity in entities]
     
     def get_{entity_name}_by_id(self, id: int) -> Optional[{entity_class}OutDto]:
         entity = self.repository.get_by_id(id)
-        return {entity_class}OutDto.model_validate(entity) if entity else None
+        return self.model_to_dto(entity)
     
     def create_{entity_name}(self, {entity_name}_data: Create{entity_class}Dto) -> {entity_class}OutDto:
         entity_data_dict = {entity_name}_data.model_dump()
         entity = self.repository.create(entity_data_dict)
-        return {entity_class}OutDto.model_validate(entity)
+        return self.model_to_dto(entity)
     
     def update_{entity_name}(self, id: int, update_data: Update{entity_class}Dto) -> Optional[{entity_class}OutDto]:
         update_dict = {{key: value for key, value in update_data.model_dump().items() if value is not None}}
         if not update_dict:
             return None
         entity = self.repository.update(id, update_dict)
-        return {entity_class}OutDto.model_validate(entity) if entity else None
+        return self.model_to_dto(entity)
     
     def delete_{entity_name}(self, id: int) -> bool:
         return self.repository.delete(id)
 ''',
 
-                        f"{entity_name}_router.py": f'''# Router for {entity_name}
+        f"{entity_name}_router.py": f'''# Router for {entity_name}
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from sqlalchemy.orm import Session
 from app.db.database import get_db
@@ -290,7 +317,6 @@ def delete_{entity_name}(
 '''
     }
 
-
 def get_dto_templates(entity_name: str, fields: List[Dict[str, str]]) -> dict:
     entity_class = entity_name.capitalize()
     pydantic_imports = _get_pydantic_imports(fields)
@@ -300,7 +326,6 @@ def get_dto_templates(entity_name: str, fields: List[Dict[str, str]]) -> dict:
 
     # Siempre necesitamos datetime por created_at/updated_at
     time_imports = "from datetime import datetime\n"
-    # Solo añadir 'date' si hay campos de tipo 'date'
     if any(f["type"] == "date" for f in fields):
         time_imports += "from datetime import date\n"
 
@@ -352,7 +377,7 @@ class Update{entity_class}Dto(BaseModel):
 
         f"{entity_name}_out_dto.py": f'''# Output DTO for {entity_name}
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 {time_imports}
 {pydantic_imports}
 

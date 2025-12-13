@@ -24,6 +24,7 @@ import os
 from pathlib import Path
 from fastapi_maker.generators.migration_manager import MigrationManager
 from fastapi_maker.generators.project_initializer import ProjectInitializer
+from fastapi_maker.generators.relation_manager import RelationManager
 
 app = typer.Typer(
     name="fam",
@@ -61,6 +62,18 @@ def migrate(message: str = typer.Option(None, "-m", "--message", help="Mensaje d
     Opcionalmente, permite especificar un mensaje para la nueva migración.
     """
     MigrationManager.run_migrations(message=message)
+
+@app.command()
+def relation():
+    """Genera una relación entre dos entidades existentes."""
+    try:
+        manager = RelationManager()
+        manager.create_relation()
+    except ImportError as e:
+        typer.echo(f"❌ Error: {e}")
+        typer.echo("💡 Asegúrate de instalar las dependencias: pip install questionary")
+        raise typer.Exit(1)
+    
 
 if __name__ == "__main__":
     app()

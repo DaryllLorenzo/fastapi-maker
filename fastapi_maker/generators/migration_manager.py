@@ -27,6 +27,7 @@ class MigrationManager:
         Returns:
             str: URL de la base de datos
         """
+
         return os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
     @staticmethod
