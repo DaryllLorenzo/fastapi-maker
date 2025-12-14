@@ -67,30 +67,59 @@ class CodeEditor:
         
         return self.insert_line(lines, content)
     
-    def insert_before(self, lines: List[str], content: str,
-                     search_content: str, function_name: Optional[str] = None,
-                     maintain_indent: bool = True) -> List[str]:
-        """Inserta una línea antes de encontrar search_content."""
+    def insert_before(
+        self,
+        lines: List[str],
+        content: str,
+        search_content: str,
+        function_name: Optional[str] = None,
+        maintain_indent: bool = True,
+        ensure_blank_line: bool = False
+    ) -> List[str]:
+        """
+        Inserta una línea antes de encontrar search_content.
+        
+        Si `ensure_blank_line=True`, se asegura de que haya una línea vacía
+        inmediatamente antes de `search_content`, e inserta `content` antes de esa línea vacía.
+        """
         temp_file = Path("__temp__.py")
         temp_file.write_text("\n".join(lines), encoding=self.encoding)
-        
+    
         try:
             result = self.find_line(temp_file, search_content, function_name)
             if result:
-                line_num, search_indent = result
-                # Insertar antes de la línea encontrada (0-indexed: line_num - 1)
-                if maintain_indent:
-                    # Mantener la indentación de la línea encontrada
-                    indent = search_indent
+                line_num, search_indent = result  # line_num es 1-indexed
+                insert_pos = line_num - 1  # posición 0-indexed de la línea con search_content
+    
+                if ensure_blank_line:
+                    # Verificar si ya hay una línea vacía justo antes
+                    if insert_pos == 0 or lines[insert_pos - 1].strip() != "":
+                        # Insertar línea vacía antes de search_content
+                        lines.insert(insert_pos, "")
+                        # Ahora el contenido debe ir antes de la línea vacía
+                        insert_pos_for_content = insert_pos
+                    else:
+                        # Ya hay una línea vacía → insertar antes de ella
+                        insert_pos_for_content = insert_pos - 1
                 else:
-                    # Usar indentación por defecto (0)
-                    indent = 0
-                
-                return self.insert_line(lines, content, line_num - 1, indent)
+                    # Comportamiento original: insertar inmediatamente antes
+                    insert_pos_for_content = insert_pos
+    
+                # Determinar indentación
+                indent = search_indent if maintain_indent else 0
+    
+                # Insertar contenido en la posición correcta
+                if indent > 0:
+                    content = f'{" " * indent}{content}'
+    
+                lines.insert(insert_pos_for_content, content)
+                return lines
+    
         finally:
             if temp_file.exists():
                 temp_file.unlink()
-        
+    
+        # Si no se encuentra, insertar al final (comportamiento original)
         return self.insert_line(lines, content)
     
     def find_insert_position_in_class(self, file_path: Path, class_name: str) -> Tuple[int, int]:
