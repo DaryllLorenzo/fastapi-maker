@@ -25,6 +25,7 @@ from pathlib import Path
 from fastapi_maker.generators.migration_manager import MigrationManager
 from fastapi_maker.generators.project_initializer import ProjectInitializer
 from fastapi_maker.generators.relation_manager import RelationManager
+from fastapi_maker.generators.router_update import RouterUpdater
 
 app = typer.Typer(
     name="fam",
@@ -69,6 +70,8 @@ def relation():
     try:
         manager = RelationManager()
         manager.create_relation()
+        updater = RouterUpdater()
+        updater.update_all_routers_descriptions()
     except ImportError as e:
         typer.echo(f"❌ Error: {e}")
         typer.echo("💡 Asegúrate de instalar las dependencias: pip install questionary")
