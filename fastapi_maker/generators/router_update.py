@@ -1,3 +1,10 @@
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 """
 Módulo para actualizar automáticamente las descripciones de los routers
 después de crear relaciones.
@@ -18,7 +25,7 @@ class RouterUpdater:
     
     def update_all_routers_descriptions(self):
         """Actualiza las descripciones de todos los routers en el proyecto."""
-        typer.echo("\n🔄 Actualizando descripciones de routers...")
+        typer.echo("\n  Actualizando descripciones de routers...")
         
         entities = []
         for entity_dir in self.base_path.iterdir():
@@ -38,7 +45,7 @@ class RouterUpdater:
         for entity_info in entities:
             self._update_router_descriptions(entity_info)
         
-        typer.echo("\n✅ Todas las descripciones de routers han sido actualizadas!")
+        typer.echo("\n  Todas las descripciones de routers han sido actualizadas!")
     
     def _update_router_descriptions(self, entity_info: dict):
         """Actualiza las descripciones del router de una entidad específica."""
@@ -60,10 +67,10 @@ class RouterUpdater:
             
             # Guardar cambios
             self.editor.write_lines(router_path, lines)
-            typer.echo(f"  ✅ Router actualizado para {entity_name}")
+            typer.echo(f"    Router actualizado para {entity_name}")
             
         except Exception as e:
-            typer.echo(f"  ⚠️  Error actualizando router de {entity_name}: {e}")
+            typer.echo(f"     Error actualizando router de {entity_name}: {e}")
     
     def _update_description_in_decorator(
         self,

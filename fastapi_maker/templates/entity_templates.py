@@ -1,5 +1,3 @@
-# templates/entity_templates.py
-
 # ---------------------------------------------------
 # Proyecto: fastapi-maker (fam)
 # Autor: Daryll Lorenzo Alfonso

@@ -14,9 +14,6 @@ import sqlite3
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
-# Eliminar la carga automática del .env desde ruta fija
-# En su lugar, la carga se hará dinámicamente según el directorio de trabajo
-
 class MigrationManager:
     """Clase para manejar operaciones de migración de Alembic."""
 
@@ -30,7 +27,7 @@ class MigrationManager:
             env_file = current_path / ".env"
             if env_file.exists():
                 load_dotenv(dotenv_path=env_file)
-                typer.echo(f"📁 Cargando variables de entorno desde: {env_file}")
+                #typer.echo(f" Cargando variables de entorno desde: {env_file}")
                 return True
             current_path = current_path.parent
         
@@ -38,7 +35,7 @@ class MigrationManager:
         script_env = Path(__file__).parent.parent / ".env"
         if script_env.exists():
             load_dotenv(dotenv_path=script_env)
-            typer.echo(f"📁 Cargando variables de entorno desde: {script_env}")
+            #typer.echo(f" Cargando variables de entorno desde: {script_env}")
             return True
             
         return False
@@ -56,17 +53,10 @@ class MigrationManager:
         
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
-            typer.echo("⚠️  DATABASE_URL no está configurada en el archivo .env")
+            typer.echo("   DATABASE_URL no está configurada en el archivo .env")
             typer.echo("   Usando base de datos SQLite por defecto...")
             db_url = "sqlite:///./app.db"
         
-        # Redactar contraseña para mostrar en logs (solo para diagnóstico)
-        parsed = urlparse(db_url)
-        safe_url = db_url
-        if parsed.password:
-            safe_url = db_url.replace(parsed.password, "******")
-        
-        typer.echo(f"🔗 URL de base de datos: {safe_url}")
         return db_url
 
     @staticmethod
@@ -108,14 +98,14 @@ class MigrationManager:
             if not db_file.exists():
                 conn = sqlite3.connect(str(db_file))
                 conn.close()
-                typer.echo(f"✅ Base de datos SQLite creada: {db_file}")
+                typer.echo(f"  Base de datos SQLite creada: {db_file}")
             else:
-                typer.echo(f"ℹ️  Base de datos SQLite ya existe: {db_file}")
+                typer.echo(f"   Base de datos SQLite ya existe: {db_file}")
                 
             return True
             
         except Exception as e:
-            typer.echo(f"❌ Error creando base de datos SQLite: {str(e)}", err=True)
+            typer.echo(f"  Error creando base de datos SQLite: {str(e)}", err=True)
             return False
 
     @staticmethod
@@ -125,7 +115,7 @@ class MigrationManager:
             import psycopg2
             return True
         except ImportError:
-            typer.echo("❌ psycopg2-binary no está instalado", err=True)
+            typer.echo("  psycopg2-binary no está instalado", err=True)
             typer.echo("   Para usar PostgreSQL, instala: pip install psycopg2-binary", err=True)
             return False
 
@@ -149,7 +139,7 @@ class MigrationManager:
             parsed = urlparse(db_url)
             db_name = parsed.path[1:]  # Remover el '/' inicial
             if not db_name:
-                typer.echo("❌ No se especificó el nombre de la base de datos en la URL", err=True)
+                typer.echo("  No se especificó el nombre de la base de datos en la URL", err=True)
                 return False
 
             # Conectar a la base de datos por defecto (postgres) para crear la nueva
@@ -163,7 +153,7 @@ class MigrationManager:
                 try:
                     conn = psycopg2.connect(default_url)
                 except psycopg2.OperationalError as e2:
-                    typer.echo(f"❌ No se pudo conectar a PostgreSQL: {str(e2)}", err=True)
+                    typer.echo(f"  No se pudo conectar a PostgreSQL: {str(e2)}", err=True)
                     typer.echo("   Verifica que el servidor PostgreSQL esté ejecutándose", err=True)
                     return False
             
@@ -176,16 +166,16 @@ class MigrationManager:
             
             if not exists:
                 cursor.execute(f'CREATE DATABASE "{db_name}"')
-                typer.echo(f"✅ Base de datos PostgreSQL creada: {db_name}")
+                typer.echo(f"  Base de datos PostgreSQL creada: {db_name}")
             else:
-                typer.echo(f"ℹ️  Base de datos PostgreSQL ya existe: {db_name}")
+                typer.echo(f"   Base de datos PostgreSQL ya existe: {db_name}")
             
             cursor.close()
             conn.close()
             return True
             
         except Exception as e:
-            typer.echo(f"❌ Error creando base de datos PostgreSQL: {str(e)}", err=True)
+            typer.echo(f"  Error creando base de datos PostgreSQL: {str(e)}", err=True)
             return False
 
     @staticmethod
@@ -195,7 +185,7 @@ class MigrationManager:
             import MySQLdb
             return True
         except ImportError:
-            typer.echo("❌ mysqlclient no está instalado", err=True)
+            typer.echo("  mysqlclient no está instalado", err=True)
             typer.echo("   Para usar MySQL, instala: pip install mysqlclient", err=True)
             return False
 
@@ -219,7 +209,7 @@ class MigrationManager:
             parsed = urlparse(db_url)
             db_name = parsed.path[1:]  # Remover el '/' inicial
             if not db_name:
-                typer.echo("❌ No se especificó el nombre de la base de datos en la URL", err=True)
+                typer.echo("  No se especificó el nombre de la base de datos en la URL", err=True)
                 return False
             
             # Extraer credenciales
@@ -237,7 +227,7 @@ class MigrationManager:
                     port=port
                 )
             except MySQLdb._exceptions.OperationalError as e:
-                typer.echo(f"❌ No se pudo conectar a MySQL: {str(e)}", err=True)
+                typer.echo(f"  No se pudo conectar a MySQL: {str(e)}", err=True)
                 typer.echo("   Verifica que el servidor MySQL esté ejecutándose", err=True)
                 return False
             
@@ -249,16 +239,16 @@ class MigrationManager:
             
             if not exists:
                 cursor.execute(f"CREATE DATABASE `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-                typer.echo(f"✅ Base de datos MySQL creada: {db_name}")
+                typer.echo(f"  Base de datos MySQL creada: {db_name}")
             else:
-                typer.echo(f"ℹ️  Base de datos MySQL ya existe: {db_name}")
+                typer.echo(f"   Base de datos MySQL ya existe: {db_name}")
             
             cursor.close()
             conn.close()
             return True
             
         except Exception as e:
-            typer.echo(f"❌ Error creando base de datos MySQL: {str(e)}", err=True)
+            typer.echo(f"  Error creando base de datos MySQL: {str(e)}", err=True)
             return False
 
     @staticmethod
@@ -288,12 +278,12 @@ class MigrationManager:
                 return MigrationManager._create_mysql_database(db_url)
                 
             else:
-                typer.echo(f"⚠️  Tipo de base de datos no reconocido: {db_type}", err=True)
+                typer.echo(f"   Tipo de base de datos no reconocido: {db_type}", err=True)
                 typer.echo("   Continuando sin crear la base de datos...", err=True)
                 return True
                 
         except Exception as e:
-            typer.echo(f"❌ Error verificando base de datos: {str(e)}", err=True)
+            typer.echo(f"  Error verificando base de datos: {str(e)}", err=True)
             typer.echo("   Continuando sin crear la base de datos...", err=True)
             return True
 
@@ -314,9 +304,9 @@ class MigrationManager:
             database_ready = MigrationManager._ensure_database_exists()
             
             if not database_ready:
-                typer.echo("❌ No se pudo crear/verificar la base de datos", err=True)
+                typer.echo("  No se pudo crear/verificar la base de datos", err=True)
                 if not typer.confirm("¿Continuar con las migraciones de todos modos?", default=False):
-                    typer.echo("🛑 Migraciones canceladas.")
+                    typer.echo("  Migraciones canceladas.")
                     raise typer.Exit(code=1)
 
             # Construir el comando de revision con autogenerate
@@ -324,14 +314,14 @@ class MigrationManager:
             if message:
                 revision_cmd.extend(["-m", message])
 
-            typer.echo("\n🔄 Ejecutando alembic revision --autogenerate...")
+            typer.echo("\n  Ejecutando alembic revision --autogenerate...")
             result = subprocess.run(revision_cmd, check=True, capture_output=True, text=True)
             if result.stdout:
                 typer.echo(result.stdout)
             if result.stderr:
                 typer.echo(result.stderr, err=True)
 
-            typer.echo("\n🚀 Ejecutando alembic upgrade head...")
+            typer.echo("\n  Ejecutando alembic upgrade head...")
             upgrade_cmd = [sys.executable, "-m", "alembic", "upgrade", "head"]
             result = subprocess.run(upgrade_cmd, check=True, capture_output=True, text=True)
             if result.stdout:
@@ -339,15 +329,15 @@ class MigrationManager:
             if result.stderr:
                 typer.echo(result.stderr, err=True)
 
-            typer.echo("\n✅ Migraciones aplicadas exitosamente.")
+            typer.echo("\n  Migraciones aplicadas exitosamente.")
 
         except subprocess.CalledProcessError as e:
-            typer.echo(f"\n❌ Error al ejecutar el comando de alembic: {e.cmd}", err=True)
+            typer.echo(f"\n  Error al ejecutar el comando de alembic: {e.cmd}", err=True)
             if e.stdout:
                 typer.echo(f"Salida estándar:\n{e.stdout}", err=True)
             if e.stderr:
                 typer.echo(f"Salida de error:\n{e.stderr}", err=True)
             raise typer.Exit(code=1)
         except Exception as e:
-            typer.echo(f"\n❌ Error inesperado durante las migraciones: {str(e)}", err=True)
+            typer.echo(f"\n  Error inesperado durante las migraciones: {str(e)}", err=True)
             raise typer.Exit(code=1)

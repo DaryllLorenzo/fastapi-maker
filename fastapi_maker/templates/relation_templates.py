@@ -1,5 +1,3 @@
-# templates/relation_templates.py
-
 # ---------------------------------------------------
 # Project: fastapi-maker (fam)
 # Author: Daryll Lorenzo Alfonso

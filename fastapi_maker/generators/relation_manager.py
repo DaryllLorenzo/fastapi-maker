@@ -1,3 +1,10 @@
+# ---------------------------------------------------
+# Proyecto: fastapi-maker (fam)
+# Autor: Daryll Lorenzo Alfonso
+# Año: 2025
+# Licencia: MIT License
+# ---------------------------------------------------
+
 import typer
 from pathlib import Path
 import questionary
@@ -38,7 +45,7 @@ class RelationManager:
     def __init__(self):
         self.base_path = Path("app/api")
         if not self.base_path.exists():
-            typer.echo("❌ No se encontró la carpeta app/api. ¿Has inicializado el proyecto?")
+            typer.echo("  No se encontró la carpeta app/api. ¿Has inicializado el proyecto?")
             raise typer.Exit(1)
         self.editor = CodeEditor()
         self.entities = self._get_existing_entities()
@@ -51,10 +58,10 @@ class RelationManager:
 
     def create_relation(self):
         if len(self.entities) < 2:
-            typer.echo("❌ Necesitas al menos dos entidades para crear una relación.")
+            typer.echo("  Necesitas al menos dos entidades para crear una relación.")
             return
         
-        typer.echo("\n🔗 Creando relación entre entidades")
+        typer.echo("\n  Creando relación entre entidades")
         typer.echo("=" * 40)
 
         origin = self._select_entity("Selecciona la entidad de ORIGEN:", self.entities)
@@ -69,7 +76,7 @@ class RelationManager:
     def _select_entity(self, message: str, choices: List[str]) -> str:
         choice = questionary.select(message=message, choices=choices, use_shortcuts=True, qmark="➤", pointer="→").ask()
         if choice is None:
-            typer.echo("\n❌ Operación cancelada por el usuario.")
+            typer.echo("\n  Operación cancelada por el usuario.")
             raise typer.Exit(0)
         return choice
 
@@ -88,7 +95,7 @@ class RelationManager:
             pointer="→"
         ).ask()
         if choice is None:
-            typer.echo("\n❌ Operación cancelada.")
+            typer.echo("\n  Operación cancelada.")
             raise typer.Exit(0)
         return next(c["value"] for c in choices if c["name"] == choice)
 
@@ -108,36 +115,36 @@ class RelationManager:
                 pointer="→"
             ).ask()
             if side is None:
-                typer.echo("\n❌ Operación cancelada.")
+                typer.echo("\n  Operación cancelada.")
                 raise typer.Exit(0)
             foreign_key_in_target = "destino" in side.lower()
             return RelationshipConfig(origin, target, relation_type, foreign_key_in_target=foreign_key_in_target)
 
     def _confirm_relationship(self, config: RelationshipConfig):
-        typer.echo("\n📋 Resumen de la relación:")
+        typer.echo("\n  Resumen de la relación:")
         typer.echo("=" * 40)
-        typer.echo(f"🔸 Entidad origen: {config.origin_entity}")
-        typer.echo(f"🔸 Entidad destino: {config.target_entity}")
-        typer.echo(f"🔸 Tipo de relación: {config.relation_type.value}")
+        typer.echo(f"  Entidad origen: {config.origin_entity}")
+        typer.echo(f"  Entidad destino: {config.target_entity}")
+        typer.echo(f"  Tipo de relación: {config.relation_type.value}")
 
         if config.relation_type in [RelationType.ONE_TO_MANY, RelationType.MANY_TO_ONE, RelationType.ONE_TO_ONE]:
             fk_entity = config.target_entity if config.foreign_key_in_target else config.origin_entity
             fk_field = f"{config.origin_entity}_id" if config.foreign_key_in_target else f"{config.target_entity}_id"
-            typer.echo(f"🔸 Foreign key en: {fk_entity}_model.py")
-            typer.echo(f"🔸 Campo: {fk_field}")
+            typer.echo(f"  Foreign key en: {fk_entity}_model.py")
+            typer.echo(f"  Campo: {fk_field}")
 
-        typer.echo(f"🔸 {config.origin_entity}_out_dto tendrá: {self._get_dto_field_desc(config.target_entity, config.is_list_in_origin)}")
-        typer.echo(f"🔸 {config.target_entity}_out_dto tendrá: {self._get_dto_field_desc(config.origin_entity, config.is_list_in_target)}")
+        typer.echo(f"  {config.origin_entity}_out_dto tendrá: {self._get_dto_field_desc(config.target_entity, config.is_list_in_origin)}")
+        typer.echo(f"  {config.target_entity}_out_dto tendrá: {self._get_dto_field_desc(config.origin_entity, config.is_list_in_target)}")
         typer.echo("=" * 40)
         if not questionary.confirm("¿Generar la relación con estas configuraciones?", default=True).ask():
-            typer.echo("\n❌ Operación cancelada.")
+            typer.echo("\n  Operación cancelada.")
             raise typer.Exit(0)
 
     def _get_dto_field_desc(self, related_entity: str, is_list: bool) -> str:
         return f"{related_entity}_ids: List[int]" if is_list else f"{related_entity}_id: Optional[int]"
 
     def _generate_relationship(self, config: RelationshipConfig):
-        typer.echo(f"\n🚀 Generando relación {config.relation_type.value}...")
+        typer.echo(f"\n  Generando relación {config.relation_type.value}...")
         try:
             self._ensure_sqlalchemy_imports(config.origin_entity)
             self._ensure_sqlalchemy_imports(config.target_entity)
@@ -154,17 +161,17 @@ class RelationManager:
             self._update_dtos_for_relationship(config)
             self._update_services_for_relationship(config)
 
-            typer.echo(f"\n✅ Relación {config.relation_type.value} generada exitosamente!")
+            typer.echo(f"\n  Relación {config.relation_type.value} generada exitosamente!")
             typer.echo(f"   Entre: {config.origin_entity} ↔ {config.target_entity}")
             self._show_next_steps(config)
         except Exception as e:
-            typer.echo(f"\n❌ Error generando relación: {str(e)}")
+            typer.echo(f"\n  Error generando relación: {str(e)}")
             import traceback
             traceback.print_exc()
             raise typer.Exit(1)
 
     def _show_next_steps(self, config: RelationshipConfig):
-        typer.echo("\n📝 Próximos pasos:")
+        typer.echo("\n  Próximos pasos:")
         typer.echo(f"   1. Ejecutar: fam migrate -m 'Agregar relación entre {config.origin_entity} y {config.target_entity}'")
         typer.echo("   2. Revisar el código generado en las carpetas de entidades")
         typer.echo("   3. Los DTOs ahora incluyen campos de ID para las relaciones y sus examples")
@@ -181,7 +188,7 @@ class RelationManager:
         if "relationship" not in content:
             lines = self._add_relationship_import(lines)
         self.editor.write_lines(model_path, lines)
-        typer.echo(f"  ✅ Imports de SQLAlchemy actualizados en {entity_name}_model.py")
+        typer.echo(f"    Imports de SQLAlchemy actualizados en {entity_name}_model.py")
 
     def _add_foreign_key_import(self, lines: List[str]) -> List[str]:
         for i, line in enumerate(lines):
@@ -235,7 +242,7 @@ class RelationManager:
         lines = self.editor.read_lines(model_path)
         lines = self.editor.insert_line(lines, fk_line, position, indent)
         self.editor.write_lines(model_path, lines)
-        typer.echo(f"  ✅ Foreign key agregada a {entity_name}_model.py: {foreign_entity}_id")
+        typer.echo(f"    Foreign key agregada a {entity_name}_model.py: {foreign_entity}_id")
 
     def _add_relationship(self, entity_name: str, related_entity: str, relationship_name: str, related_class: str, is_list: bool = False, secondary: str = None, back_populates: str = None, uselist: bool = None):
         model_path = self.base_path / entity_name / f"{entity_name}_model.py"
@@ -243,13 +250,13 @@ class RelationManager:
             raise FileNotFoundError(f"Archivo de modelo no encontrado para {entity_name}")
         lines = self.editor.read_lines(model_path)
         if self.editor.ensure_content(lines, f"{relationship_name} = relationship"):
-            typer.echo(f"⚠️  La relación {relationship_name} ya existe en {entity_name}_model.py")
+            typer.echo(f"   La relación {relationship_name} ya existe en {entity_name}_model.py")
             return
         rel_line = get_relationship_template(relationship_name, related_class, is_list, secondary, back_populates, uselist)
         position, indent = self.editor.find_insert_position_in_class(model_path, entity_name.capitalize())
         lines = self.editor.insert_line(lines, rel_line, position, indent)
         self.editor.write_lines(model_path, lines)
-        typer.echo(f"  ✅ Relación agregada a {entity_name}_model.py: {relationship_name}")
+        typer.echo(f"    Relación agregada a {entity_name}_model.py: {relationship_name}")
 
     def _create_association_table(self, entity1: str, entity2: str):
         table_name = f"{entity1}_{entity2}"
@@ -260,7 +267,7 @@ class RelationManager:
         table_path = models_dir / f"{table_name}.py"
         table_code = get_association_table_template(entity1, entity2)
         table_path.write_text(table_code, encoding='utf-8')
-        typer.echo(f"  ✅ Tabla de asociación creada: shared/models/{table_name}.py")
+        typer.echo(f"    Tabla de asociación creada: shared/models/{table_name}.py")
 
     def _update_dtos_for_relationship(self, config: RelationshipConfig):
         # --- Salida: según is_list_*
@@ -313,7 +320,7 @@ class RelationManager:
         lines = self.editor.read_lines(dto_path)
 
         if self.editor.ensure_content(lines, f"    {field_name}:"):
-            typer.echo(f"⚠️  El campo {field_name} ya existe en {dto_filename}")
+            typer.echo(f"   El campo {field_name} ya existe en {dto_filename}")
             return
 
         if dto_suffix == "_out_dto":
@@ -339,7 +346,7 @@ class RelationManager:
         lines = self._update_dto_examples(lines, entity_name, related_entity, is_list, dto_type=dto_suffix.strip("_"))
 
         self.editor.write_lines(dto_path, lines)
-        typer.echo(f"  ✅ DTO {dto_suffix} actualizado para {entity_name}: {field_line.strip()}")
+        typer.echo(f"    DTO {dto_suffix} actualizado para {entity_name}: {field_line.strip()}")
 
     def _update_dto_examples(self, lines: List[str], entity_name: str, related_entity: str, is_list: bool, dto_type: str) -> List[str]:
         """Actualiza el ejemplo en model_config (asume formato dict literal con json_schema_extra)."""
@@ -399,7 +406,7 @@ class RelationManager:
         if any(f'"{field_name}"' in line or f"'{field_name}'" in line for line in lines[example_dict_start:example_end]):
             return lines
 
-        current_indent = 8  # fallback razonable (4 para class + 4 para ejemplo)
+        current_indent = 8  # fallback (4 para class + 4 para ejemplo)
         if example_dict_start < len(lines):
             first_field = lines[example_dict_start]
             if first_field.strip():
@@ -444,13 +451,13 @@ class RelationManager:
         method_name = f"get_by_{related_entity}_id"
         lines = self.editor.read_lines(repo_path)
         if self.editor.ensure_content(lines, f"def {method_name}"):
-            typer.echo(f"⚠️  El método {method_name} ya existe en {entity_name}_repository.py")
+            typer.echo(f"   El método {method_name} ya existe en {entity_name}_repository.py")
             return
 
         method_code = get_repository_method(entity_name, related_entity)
         lines = self.editor.insert_before(lines, method_code, "def get_by_id", maintain_indent=False)
         self.editor.write_lines(repo_path, lines)
-        typer.echo(f"  ✅ Repositorio actualizado para {entity_name} (método {method_name})")
+        typer.echo(f"    Repositorio actualizado para {entity_name} (método {method_name})")
 
     def _update_service_with_relation_ids(self, entity_name: str, config: RelationshipConfig):
         service_path = self.base_path / entity_name / f"{entity_name}_service.py"
@@ -478,7 +485,7 @@ class RelationManager:
             lines = self.editor.insert_line(lines, method_code.strip(), position, indent)
 
         self.editor.write_lines(service_path, lines)
-        typer.echo(f"  ✅ Servicio actualizado para {entity_name} (incluye IDs de {related_entity})")
+        typer.echo(f"    Servicio actualizado para {entity_name} (incluye IDs de {related_entity})")
 
     def _build_dto_logic_lines(self, related_entity: str, is_list: bool, base_indent: int) -> List[str]:
         i4 = " " * (base_indent + 4)
@@ -519,7 +526,7 @@ class RelationManager:
             position, indent = self.editor.find_insert_position_in_class(service_path, f"{entity_name.capitalize()}Service")
             lines = self.editor.insert_line(lines, methods_code.strip(), position, indent)
             self.editor.write_lines(service_path, lines)
-            typer.echo(f"  ✅ Servicio actualizado con métodos many-to-many para {entity_name}")
+            typer.echo(f"    Servicio actualizado con métodos many-to-many para {entity_name}")
 
     def _update_service_for_one_to_one(self, config: RelationshipConfig):
         for entity_name in [config.origin_entity, config.target_entity]:
@@ -527,7 +534,7 @@ class RelationManager:
             if not service_path.exists():
                 continue
             self._update_service_with_relation_ids(entity_name, config)
-            typer.echo(f"  ✅ Servicio actualizado para {entity_name} (one-to-one)")
+            typer.echo(f"    Servicio actualizado para {entity_name} (one-to-one)")
 
 
 def main():
