@@ -61,17 +61,17 @@ from app.db.database import Base
 def get_out_dto_relation_field(related_entity: str, is_list: bool) -> str:
     """Genera campo de relación para DTOs de salida."""
     if is_list:
-        return f'{related_entity}_ids: List[int] = []'
+        return f'{related_entity}_ids: Optional[List[int]] = None'
     else:
-        return f'{related_entity}_id: Optional[int] = None'
+        return f'{related_entity}_id: int'
 
 
 def get_in_dto_relation_field(related_entity: str, is_list: bool) -> str:
     """Genera campo de relación para DTOs de entrada."""
-    if is_list:
-        return f'{related_entity}_ids: List[int] = []'
-    else:
-        return f'{related_entity}_id: Optional[int] = None'
+    #if is_list:
+    #    return f'{related_entity}_ids: Optional[List[int]] = None'
+    #else:
+    return f'{related_entity}_id: int'
 
 
 def get_model_to_dto_logic(related_entity: str, is_list: bool) -> str:
