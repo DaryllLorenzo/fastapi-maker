@@ -26,7 +26,6 @@ from fastapi_maker.templates.relation_templates import (
 
 class RelationType(Enum):
     ONE_TO_MANY = "one-to-many"
-    MANY_TO_ONE = "many-to-one"
     MANY_TO_MANY = "many-to-many"
     ONE_TO_ONE = "one-to-one"
 
@@ -83,7 +82,6 @@ class RelationManager:
     def _select_relation_type(self) -> RelationType:
         choices = [
             {"name": "Uno a Muchos (One-to-Many)", "value": RelationType.ONE_TO_MANY},
-            {"name": "Muchos a Uno (Many-to-One)", "value": RelationType.MANY_TO_ONE},
             {"name": "Muchos a Muchos (Many-to-Many)", "value": RelationType.MANY_TO_MANY},
             {"name": "Uno a Uno (One-to-One)", "value": RelationType.ONE_TO_ONE},
         ]
@@ -102,8 +100,6 @@ class RelationManager:
     def _configure_relationship(self, origin: str, target: str, relation_type: RelationType) -> RelationshipConfig:
         if relation_type == RelationType.ONE_TO_MANY:
             return RelationshipConfig(origin, target, relation_type, foreign_key_in_target=True, is_list_in_origin=True)
-        elif relation_type == RelationType.MANY_TO_ONE:
-            return RelationshipConfig(origin, target, relation_type, foreign_key_in_target=False, is_list_in_target=True)
         elif relation_type == RelationType.MANY_TO_MANY:
             return RelationshipConfig(origin, target, relation_type, foreign_key_in_target=False, is_list_in_origin=True, is_list_in_target=True)
         elif relation_type == RelationType.ONE_TO_ONE:
@@ -127,7 +123,7 @@ class RelationManager:
         typer.echo(f"  Entidad destino: {config.target_entity}")
         typer.echo(f"  Tipo de relación: {config.relation_type.value}")
 
-        if config.relation_type in [RelationType.ONE_TO_MANY, RelationType.MANY_TO_ONE, RelationType.ONE_TO_ONE]:
+        if config.relation_type in [RelationType.ONE_TO_MANY, RelationType.ONE_TO_ONE]:
             fk_entity = config.target_entity if config.foreign_key_in_target else config.origin_entity
             fk_field = f"{config.origin_entity}_id" if config.foreign_key_in_target else f"{config.target_entity}_id"
             typer.echo(f"  Foreign key en: {fk_entity}_model.py")
@@ -151,8 +147,6 @@ class RelationManager:
 
             if config.relation_type == RelationType.ONE_TO_MANY:
                 self._generate_one_to_many(config)
-            elif config.relation_type == RelationType.MANY_TO_ONE:
-                self._generate_many_to_one(config)
             elif config.relation_type == RelationType.MANY_TO_MANY:
                 self._generate_many_to_many(config)
             elif config.relation_type == RelationType.ONE_TO_ONE:
@@ -212,11 +206,6 @@ class RelationManager:
         self._add_foreign_key(config.target_entity, config.origin_entity)
         self._add_relationship(config.origin_entity, config.target_entity, f"{config.target_entity}s", config.target_entity.capitalize(), is_list=True, back_populates=config.origin_entity)
         self._add_relationship(config.target_entity, config.origin_entity, config.origin_entity, config.origin_entity.capitalize(), is_list=False, back_populates=f"{config.target_entity}s")
-
-    def _generate_many_to_one(self, config: RelationshipConfig):
-        self._add_foreign_key(config.origin_entity, config.target_entity)
-        self._add_relationship(config.origin_entity, config.target_entity, config.target_entity, config.target_entity.capitalize(), is_list=False, back_populates=f"{config.origin_entity}s")
-        self._add_relationship(config.target_entity, config.origin_entity, f"{config.origin_entity}s", config.origin_entity.capitalize(), is_list=True, back_populates=config.target_entity)
 
     def _generate_many_to_many(self, config: RelationshipConfig):
         table_name = f"{config.origin_entity}_{config.target_entity}"
@@ -288,8 +277,6 @@ class RelationManager:
 
         if config.relation_type == RelationType.ONE_TO_MANY:
             update_in_and_update(config.target_entity, config.origin_entity)
-        elif config.relation_type == RelationType.MANY_TO_ONE:
-            update_in_and_update(config.origin_entity, config.target_entity)
         elif config.relation_type == RelationType.ONE_TO_ONE:
             if config.foreign_key_in_target:
                 update_in_and_update(config.target_entity, config.origin_entity)
@@ -425,7 +412,7 @@ class RelationManager:
         return lines
 
     def _update_services_for_relationship(self, config: RelationshipConfig):
-        if config.relation_type in [RelationType.ONE_TO_MANY, RelationType.MANY_TO_ONE]:
+        if config.relation_type in [RelationType.ONE_TO_MANY]:
             self._update_service_for_foreign_key_relationship(config)
         elif config.relation_type == RelationType.MANY_TO_MANY:
             self._update_service_for_many_to_many(config)
@@ -440,8 +427,6 @@ class RelationManager:
 
         if config.relation_type == RelationType.ONE_TO_MANY:
             self._update_repository_for_fk(config.target_entity, config.origin_entity)
-        elif config.relation_type == RelationType.MANY_TO_ONE:
-            self._update_repository_for_fk(config.origin_entity, config.target_entity)
 
     def _update_repository_for_fk(self, entity_name: str, related_entity: str):
         repo_path = self.base_path / entity_name / f"{entity_name}_repository.py"
