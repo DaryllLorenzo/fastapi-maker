@@ -33,7 +33,7 @@ def get_relationship_template(
     if back_populates:
         params.append(f'back_populates="{back_populates}"')
     if uselist is not None:
-        params.append(f'uselist={str(uselist).lower()}')
+        params.append(f'uselist={str(uselist)}')
     elif not is_list:
         params.append('uselist=False')
     
