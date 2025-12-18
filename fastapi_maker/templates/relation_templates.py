@@ -197,3 +197,67 @@ def get_many_to_many_service_methods(entity_name: str, related_entity: str) -> s
         f'        return True\n'
         f'    return False\n'
     )
+
+def get_update_method_with_many_to_many_relations(entity_name: str, related_entity: str) -> str:
+    """Genera un método update_* que maneja relaciones m-n."""
+    return (
+        f'    def update_{entity_name}(self, {entity_name}_id: int, {entity_name}_update_dto: Update{entity_name.capitalize()}Dto) -> {entity_name.capitalize()}OutDto:\n'
+        f'        """Actualiza una {entity_name} existente con manejo de relaciones many-to-many."""\n'
+        f'        # Obtener la entidad actual\n'
+        f'        entity = self.repository.get_by_id({entity_name}_id)\n'
+        f'        if not entity:\n'
+        f'            raise ValueError("{entity_name.capitalize()} no encontrada")\n\n'
+        f'        data = {entity_name}_update_dto.model_dump(exclude_unset=True)\n\n'
+        f'        # Separar datos base de relaciones (listas)\n'
+        f'        base_data = {{k: v for k, v in data.items() if not k.endswith("_ids")}}\n'
+        f'        relation_ids = {{k: v for k, v in data.items() if k.endswith("_ids")}}\n\n'
+        f'        # Actualizar campos base\n'
+        f'        if base_data:\n'
+        f'            entity = self.repository.update({entity_name}_id, base_data)\n\n'
+        f'        # Manejar relaciones many-to-many si se proporcionan\n'
+        f'        for rel_field, new_ids in relation_ids.items():\n'
+        f'            if new_ids is not None:\n'
+        f'                rel_name = rel_field[:-4]  # quitar "_ids"\n'
+        f'                \n'
+        f'                # Obtener IDs actuales\n'
+        f'                current_ids = [obj.id for obj in getattr(entity, f"{{rel_name}}s", [])]\n'
+        f'                \n'
+        f'                # Encontrar IDs a agregar y eliminar\n'
+        f'                ids_to_add = [id for id in new_ids if id not in current_ids]\n'
+        f'                ids_to_remove = [id for id in current_ids if id not in new_ids]\n'
+        f'                \n'
+        f'                # Agregar nuevas relaciones\n'
+        f'                for rel_id in ids_to_add:\n'
+        f'                    add_method = getattr(self, f"add_{{rel_name}}_to_{entity_name}", None)\n'
+        f'                    if add_method:\n'
+        f'                        try:\n'
+        f'                            add_method({entity_name}_id, rel_id)\n'
+        f'                        except Exception as e:\n'
+        f'                            self.logger.warning(f"No se pudo agregar relación {{rel_name}} {{rel_id}}: {{e}}")\n'
+        f'                \n'
+        f'                # Eliminar relaciones antiguas\n'
+        f'                for rel_id in ids_to_remove:\n'
+        f'                    remove_method = getattr(self, f"remove_{{rel_name}}_from_{entity_name}", None)\n'
+        f'                    if remove_method:\n'
+        f'                        try:\n'
+        f'                            remove_method({entity_name}_id, rel_id)\n'
+        f'                        except Exception as e:\n'
+        f'                            self.logger.warning(f"No se pudo eliminar relación {{rel_name}} {{rel_id}}: {{e}}")\n'
+        f'        \n'
+        f'        # Refrescar y retornar\n'
+        f'        self.repository.db.refresh(entity)\n'
+        f'        return self.model_to_dto(entity)\n'
+    )
+
+
+def get_update_method_with_foreign_key(entity_name: str, related_entity: str) -> str:
+    """Genera un método update_* que maneja foreign keys."""
+    return (
+        f'    def update_{entity_name}(self, {entity_name}_id: int, {entity_name}_update_dto: Update{entity_name.capitalize()}Dto) -> {entity_name.capitalize()}OutDto:\n'
+        f'        """Actualiza una {entity_name} existente con manejo de foreign keys."""\n'
+        f'        data = {entity_name}_update_dto.model_dump(exclude_unset=True)\n'
+        f'        # Mantener foreign key (_id) pero filtrar listas (_ids)\n'
+        f'        update_data = {{k: v for k, v in data.items() if not k.endswith("_ids")}}\n'
+        f'        entity = self.repository.update({entity_name}_id, update_data)\n'
+        f'        return self.model_to_dto(entity)\n'
+    )

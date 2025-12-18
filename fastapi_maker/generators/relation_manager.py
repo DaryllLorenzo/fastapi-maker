@@ -24,7 +24,9 @@ from fastapi_maker.templates.relation_templates import (
     get_many_to_many_service_methods,
     get_get_by_ids_method,
     get_create_method_with_relation_filter,
-    get_create_method_with_many_to_many_relations
+    get_create_method_with_many_to_many_relations,
+    get_update_method_with_many_to_many_relations,  # Nuevo
+    get_update_method_with_foreign_key  # Nuevo
 )
 
 
@@ -442,22 +444,145 @@ class RelationManager:
             # Inject mapping logic for the "One" side (list of IDs)
             if config.is_list_in_origin:
                  self._update_service_model_to_dto(config.origin_entity, config.target_entity, is_list=True)
-            
+            # Actualizar métodos update
+            self._update_service_update_method(config.origin_entity, config)
+            self._update_service_update_method(config.target_entity, config)
+
         elif config.relation_type == RelationType.MANY_TO_MANY:
             self._update_service_for_many_to_many(config)
             # Inject mapping logic for both sides (list of IDs)
             self._update_service_model_to_dto(config.origin_entity, config.target_entity, is_list=True)
             self._update_service_model_to_dto(config.target_entity, config.origin_entity, is_list=True)
-            
+            # Actualizar métodos update
+            self._update_service_update_method(config.origin_entity, config)
+            self._update_service_update_method(config.target_entity, config)
+
         elif config.relation_type == RelationType.ONE_TO_ONE:
             self._update_service_for_one_to_one(config)
-            # Inject mapping logic only for the inverse side (the one that DOES NOT have the FK)
+            # Inject mapping logic only for the inverse side
             if config.foreign_key_in_target:
-                 # Origin is inverse, needs scalar logic
                  self._update_service_model_to_dto(config.origin_entity, config.target_entity, is_list=False)
             else:
-                 # Target is inverse, needs scalar logic
                  self._update_service_model_to_dto(config.target_entity, config.origin_entity, is_list=False)
+            # Actualizar métodos update
+            self._update_service_update_method(config.origin_entity, config)
+            self._update_service_update_method(config.target_entity, config)
+
+    def _update_service_update_method(self, entity_name: str, config: RelationshipConfig):
+        """
+        Actualiza o crea el método update_{entity_name} en el servicio.
+        """
+        service_path = self.base_path / entity_name / f"{entity_name}_service.py"
+        if not service_path.exists():
+            return
+    
+        lines = self.editor.read_lines(service_path)
+        
+        # Determinar el tipo de relación para esta entidad
+        is_many_to_many = config.relation_type == RelationType.MANY_TO_MANY
+        has_list_in_dto = False
+        related_entity = None
+        
+        if is_many_to_many:
+            if entity_name == config.origin_entity and config.is_list_in_origin:
+                has_list_in_dto = True
+                related_entity = config.target_entity
+            elif entity_name == config.target_entity and config.is_list_in_target:
+                has_list_in_dto = True
+                related_entity = config.origin_entity
+        
+        # Generar el método update apropiado
+        if has_list_in_dto:
+            update_method = get_update_method_with_many_to_many_relations(entity_name, related_entity)
+        else:
+            # Para relaciones one-to-many o one-to-one, usar el método simple
+            update_method = get_update_method_with_foreign_key(entity_name, 
+                config.target_entity if entity_name == config.origin_entity else config.origin_entity)
+        
+        # Buscar el método update existente
+        update_method_name = f"update_{entity_name}"
+        method_start = -1
+        
+        for i, line in enumerate(lines):
+            if line.lstrip().startswith(f"def {update_method_name}") or line.lstrip().startswith(f"async def {update_method_name}"):
+                method_start = i
+                break
+            
+        if method_start == -1:
+            # Si no existe, insertarlo después del método create
+            create_method_pos = -1
+            for i, line in enumerate(lines):
+                if line.lstrip().startswith(f"def create_{entity_name}") or line.lstrip().startswith(f"async def create_{entity_name}"):
+                    create_method_pos = i
+                    break
+                
+            if create_method_pos != -1:
+                # Encontrar el final del método create
+                method_indent = len(lines[create_method_pos]) - len(lines[create_method_pos].lstrip())
+                method_end = len(lines) - 1
+                for j in range(create_method_pos + 1, len(lines)):
+                    stripped = lines[j].lstrip()
+                    current_indent = len(lines[j]) - len(stripped)
+                    if (stripped.startswith("def ") or stripped.startswith("async def ")) and current_indent <= method_indent:
+                        method_end = j - 1
+                        break
+                    
+                # Insertar después del método create
+                insert_pos = method_end + 1
+                update_lines = update_method.strip().split("\n")
+                indented_lines = []
+                for line in update_lines:
+                    if line.strip():
+                        indented_lines.append(" " * method_indent + line)
+                    else:
+                        indented_lines.append("")
+                
+                # Añadir línea en blanco antes si es necesario
+                if insert_pos < len(lines) and lines[insert_pos].strip() != "":
+                    lines.insert(insert_pos, "")
+                    insert_pos += 1
+                
+                lines[insert_pos:insert_pos] = indented_lines
+        else:
+            # Reemplazar el método existente
+            method_indent = len(lines[method_start]) - len(lines[method_start].lstrip())
+            method_end = len(lines) - 1
+            for j in range(method_start + 1, len(lines)):
+                stripped = lines[j].lstrip()
+                current_indent = len(lines[j]) - len(stripped)
+                if (stripped.startswith("def ") or stripped.startswith("async def ")) and current_indent <= method_indent:
+                    method_end = j - 1
+                    break
+                
+            update_lines = update_method.strip().split("\n")
+            indented_lines = []
+            for line in update_lines:
+                if line.strip():
+                    indented_lines.append(" " * method_indent + line)
+                else:
+                    indented_lines.append("")
+            
+            lines[method_start:method_end + 1] = indented_lines
+        
+        # Asegurar que existe el import de logging si se necesita
+        if has_list_in_dto:
+            lines = self.editor.ensure_import(lines, "import logging")
+            # Asegurar que el logger está definido en la clase
+            if not any("logger = logging.getLogger(__name__)" in line for line in lines):
+                # Buscar la clase
+                class_start = -1
+                for i, line in enumerate(lines):
+                    if f"class {entity_name.capitalize()}Service" in line:
+                        class_start = i
+                        break
+                if class_start != -1:
+                    # Insertar después de la definición de la clase
+                    insert_idx = class_start + 1
+                    while insert_idx < len(lines) and lines[insert_idx].strip().startswith('"""'):
+                        insert_idx += 1
+                    lines.insert(insert_idx, "    logger = logging.getLogger(__name__)\n")
+        
+        self.editor.write_lines(service_path, lines)
 
     def _update_service_model_to_dto(self, entity_name: str, related_entity: str, is_list: bool):
         """Inyecta la lógica de mapeo en el método model_to_dto del servicio."""

@@ -1,6 +1,6 @@
 # fastapi-maker
 
-> 🚀 **FastAPI project scaffolding CLI** – Generate production-ready CRUD modules in seconds with explicit field requirements, realistic examples, and clean **offline Swagger documentation**.
+> 🚀 **FastAPI project scaffolding CLI** – Generate production-ready CRUD modules in seconds with explicit field requirements, realistic examples, clean **offline Swagger documentation**, and database relationships.
 
 A powerful command-line tool to bootstrap and scale FastAPI applications with a clean, maintainable architecture:
 
@@ -8,6 +8,7 @@ A powerful command-line tool to bootstrap and scale FastAPI applications with a 
 - **Pydantic v2 DTOs** (Create, Update, Response) with accurate type hints and validation
 - **Repository + Service** pattern for separation of concerns
 - **Routers** auto-registered in `main.py` with clean path parameters
+- **Database relationships** with interactive setup for One-to-Many, Many-to-Many, and One-to-One
 - **Alembic** pre-configured with models auto-imported
 - **Offline API Documentation** with Swagger UI and ReDoc (no CDN required)
 - Environment management via `.env` for example:
@@ -30,6 +31,7 @@ Perfect for rapid prototyping, MVP development, or enforcing consistent structur
 ### Core Commands
 - `fam init` → Initialize a new FastAPI project with database, Alembic, CORS, logging, and **offline documentation**
 - `fam create <entity> [fields...]` → Generate a full CRUD module with customizable fields
+- `fam relation` → Create relationships between existing entities (One-to-Many, Many-to-Many, One-to-One)
 - `fam migrate [-m "message"]` → Auto-generate and apply database migrations with Alembic
 
 ### 🛡️ Offline API Documentation
@@ -74,6 +76,22 @@ app/api/user/
     └── user_out_dto.py  # API responses (with id, created_at, updated_at)
 ```
 
+### Database Relationships
+Create relationships between entities with an interactive wizard:
+```bash
+fam relation
+```
+**Supported relationship types:**
+- **One-to-Many**: e.g., User has many Orders
+- **Many-to-Many**: e.g., Products belong to multiple Categories
+- **One-to-One**: e.g., User has one Profile
+
+**Automatic updates include:**
+- SQLAlchemy ForeignKey and relationship() fields
+- DTOs with relation fields (`user_id` or `category_ids`)
+- Service layer mapping logic
+- Association tables for Many-to-Many relationships
+
 ### Production-Ready Swagger (OpenAPI) Docs
 - **Clean route display**: `/users/{user_id}` instead of `/users/user_id`
 - **Clear field requirements**: POST endpoint description lists **Required** and **Optional** fields
@@ -110,11 +128,15 @@ fam init
 # Create a User entity with required name and optional fields
 fam create user *name:str email:str age:int is_active:bool
 
-# Create an Animal entity with only a required name
-fam create animal *name:str
+# Create an Order entity
+fam create order *amount:float status:str
+
+# Create a relationship between User and Order (One-to-Many)
+fam relation
+# Follow the interactive prompts to create a User -> Order relationship
 
 # Run database migrations (auto-creates database if needed)
-fam migrate -m "Add user and animal tables"
+fam migrate -m "Add user and order tables with relationship"
 
 # Start your FastAPI app with offline documentation
 python3 -m app.main
@@ -166,6 +188,7 @@ DATABASE_URL=mysql://user:password@localhost:3306/mydatabase
 - **Team Consistency**: Enforce clean architecture across engineering teams
 - **Learning FastAPI**: Excellent for understanding FastAPI best practices
 - **Production APIs**: Solid foundation for scalable applications
+- **Database Modeling**: Build complex data models with relationships easily
 
 ## 🤝 Contributing
 
@@ -184,4 +207,5 @@ MIT License - feel free to use in commercial projects.
 > 💡 **Pro Tip**: Use `*` prefix to mark fields as required — everything else is optional by default. Your API consumers will thank you for the clarity!
 
 > 🌐 **Documentation Note**: Your API docs work completely offline thanks to `fastapi-standalone-docs`. Perfect for development in restricted environments or when privacy matters!
-```
+
+> 🔗 **Relationship Tip**: Use `fam relation` after creating your entities to build connected data models with proper foreign keys and DTOs.
