@@ -26,6 +26,7 @@ from fastapi_maker.generators.migration_manager import MigrationManager
 from fastapi_maker.generators.project_initializer import ProjectInitializer
 from fastapi_maker.generators.relation_manager import RelationManager
 from fastapi_maker.generators.router_update import RouterUpdater
+from fastapi_maker.utils.ruff_executor import RuffExecutor
 
 app = typer.Typer(
     name="fam",
@@ -77,6 +78,42 @@ def relation():
         typer.echo("💡 Asegúrate de instalar las dependencias: pip install questionary")
         raise typer.Exit(1)
     
+@app.command()
+def lint(
+    check: bool = typer.Option(
+        False, "--check", "-c", 
+        help="Solo detecta problemas sin hacer cambios"
+    ),
+    fix: bool = typer.Option(
+        False, "--fix", "-f", 
+        help="Corrige automáticamente problemas de estilo (imports no usados, formato básico)"
+    ),
+    format: bool = typer.Option(
+        False, "--format", "-F", 
+        help="Aplica formato al código (indentación, comillas, longitud de línea)"
+    ),
+    all: bool = typer.Option(
+        False, "--all", "-a", 
+        help="Ejecuta todas las operaciones: detecta, corrige y formatea"
+    )
+):
+    """
+    Ejecuta Ruff linter/formatter en el proyecto.
+    
+    - Usa --check para solo ver problemas
+    - Usa --fix para corregir automáticamente problemas simples
+    - Usa --format para aplicar estilo de código
+    - Sin opciones: verifica y formatea
+    
+    Nota: --fix solo corrige problemas superficiales de estilo,
+    no modifica la lógica de tu código.
+    """
+    RuffExecutor.execute(
+        check=check,
+        fix=fix,
+        format_cmd=format,
+        all_ops=all
+    )
 
 if __name__ == "__main__":
     app()
