@@ -3,7 +3,6 @@ Ejecutor de Ruff para FastAPI Maker.
 Maneja toda la lógica de ejecución del linter/formatter.
 """
 import subprocess
-import sys
 from pathlib import Path
 import typer
 
@@ -24,21 +23,21 @@ class RuffExecutor:
         """Asegura que la configuración de Ruff existe."""
         ruff_config = Path("pyproject.toml")
         if not ruff_config.exists():
-            typer.echo("⚠️  No se encontró pyproject.toml. Generando configuración de Ruff...")
+            typer.echo("  No se encontró pyproject.toml. Generando configuración de Ruff...")
             from fastapi_maker.generators.ruff_config import RuffConfigGenerator
             RuffConfigGenerator.generate_ruff_config()
     
     @staticmethod
     def run_command(cmd_parts, description):
         """Ejecuta un comando y maneja la salida."""
-        typer.echo(f"▶️  {description}: {' '.join(cmd_parts)}")
+        typer.echo(f" {description}: {' '.join(cmd_parts)}")
         result = subprocess.run(cmd_parts)
         return result
     
     @staticmethod
     def execute_all():
         """Ejecuta todas las operaciones: lint con fix y format."""
-        typer.echo("🔍 Ejecutando lint y format completo...")
+        typer.echo(" Ejecutando lint y format completo...")
         
         # Primero lint con fix
         lint_result = RuffExecutor.run_command(
@@ -47,7 +46,7 @@ class RuffExecutor:
         )
         
         if lint_result.returncode != 0:
-            typer.echo("⚠️  Algunos problemas de linting no se pudieron arreglar automáticamente")
+            typer.echo("  Algunos problemas de linting no se pudieron arreglar automáticamente")
         
         # Luego format
         RuffExecutor.run_command(
@@ -55,7 +54,7 @@ class RuffExecutor:
             "Aplicando formato al código"
         )
         
-        typer.echo("✅ Lint y format completados!")
+        typer.echo(" Lint y format completados!")
     
     @staticmethod
     def execute_check_only():
@@ -84,7 +83,7 @@ class RuffExecutor:
     @staticmethod
     def execute_default():
         """Ejecuta el modo por defecto: check + format."""
-        typer.echo("🔍 Ejecutando lint y format...")
+        typer.echo(" Ejecutando lint y format...")
         
         # Primero lint (solo check)
         lint_result = RuffExecutor.run_command(
@@ -99,9 +98,9 @@ class RuffExecutor:
         )
         
         if lint_result.returncode == 0 and format_result.returncode == 0:
-            typer.echo("✅ Lint y format completados exitosamente!")
+            typer.echo(" Lint y format completados exitosamente!")
         else:
-            typer.echo("⚠️  Completado con advertencias o errores")
+            typer.echo("  Completado con advertencias o errores")
     
     @staticmethod
     def execute(check=False, fix=False, format_cmd=False, all_ops=False):
@@ -116,8 +115,8 @@ class RuffExecutor:
         """
         # Verificar instalación
         if not RuffExecutor.check_ruff_installed():
-            typer.echo("❌ Ruff no está instalado.")
-            typer.echo("💡 Instala ruff: pip install ruff")
+            typer.echo(" Ruff no está instalado.")
+            typer.echo(" Instala ruff: pip install ruff")
             typer.echo("   o usa: pip install 'fastapi-maker[lint]' si configuras extras")
             raise typer.Exit(1)
         
