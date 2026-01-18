@@ -2,7 +2,6 @@
 Generador de configuración de Ruff para FastAPI Maker.
 """
 from pathlib import Path
-import toml
 import typer
 
 class RuffConfigGenerator:
@@ -12,140 +11,99 @@ class RuffConfigGenerator:
     def generate_ruff_config():
         """
         Genera una configuración básica de Ruff en pyproject.toml.
-        Si ya existe, actualiza la sección de ruff.
         """
         config_path = Path("pyproject.toml")
         
-        # Configuración básica de Ruff
-        ruff_config = {
-            "tool": {
-                "ruff": {
-                    # Configuración de linting
-                    "lint": {
-                        "select": [
-                            "E",   # pycodestyle errors
-                            "W",   # pycodestyle warnings
-                            "F",   # pyflakes
-                            "I",   # isort (organización de imports)
-                            "B",   # flake8-bugbear
-                            "C4",  # flake8-comprehensions
-                            "UP",  # pyupgrade
-                            "N",   # pep8-naming
-                            "PL",  # Pylint
-                            "RUF", # Reglas específicas de Ruff
-                        ],
-                        "ignore": [
-                            "E501",  # line too long (manejado por formatter)
-                            "B008",  # do not perform function calls in argument defaults
-                            "PLR0913",  # Too many arguments
-                            "PLR0915",  # Too many statements
-                            "PLR2004",  # Magic value used in comparison
-                        ],
-                        "exclude": [
-                            ".git",
-                            "__pycache__",
-                            ".env",
-                            ".venv",
-                            "venv",
-                            "env",
-                            ".mypy_cache",
-                            ".pytest_cache",
-                            "migrations",
-                            "alembic",
-                            "tests/__pycache__",
-                        ],
-                        # Configuraciones específicas
-                        "per-file-ignores": {
-                            "__init__.py": ["F401"],  # unused import en __init__
-                        },
-                    },
-                    # Configuración de formateo
-                    "format": {
-                        "indent-style": "space",
-                        "indent-width": 4,
-                        "line-length": 88,
-                        "quote-style": "double",
-                    },
-                    # Configuración de isort (organización de imports)
-                    "lint.isort": {
-                        "known-first-party": ["app", "models", "schemas", "routers", "crud"],
-                        "lines-after-imports": 2,
-                    },
-                    # Configuración específica para FastAPI
-                    "lint.flake8-pytest-style": {
-                        "fixture-parentheses": False,
-                    },
-                }
-            }
-        }
+        # Configuración simple y funcional de Ruff
+        config_content = '''[tool.ruff]
+# Mismo que Black
+line-length = 88
+indent-width = 4
+
+# Asumir Python 3.11 para FastAPI
+target-version = "py311"
+
+# Excluir directorios comunes
+exclude = [
+    ".git",
+    "__pycache__",
+    ".env",
+    ".venv",
+    "venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "migrations",
+    "alembic",
+    "tests/__pycache__",
+]
+
+[tool.ruff.lint]
+# Reglas básicas de Ruff
+select = ["E", "F", "I", "B", "UP"]
+
+# Reglas a ignorar
+ignore = [
+    "E501",  # line too long - manejado por formatter
+    "B008",  # do not perform function calls in argument defaults
+]
+
+# Ignorar imports no usados en __init__.py
+per-file-ignores = { "__init__.py" = ["F401"] }
+
+[tool.ruff.lint.isort]
+# Configurar isort para FastAPI
+known-first-party = ["app", "models", "schemas", "routers", "crud"]
+
+[tool.ruff.format]
+# Como Black
+quote-style = "double"
+indent-style = "space"
+'''
         
         try:
             if config_path.exists():
-                # Leer configuración existente
+                typer.echo("pyproject.toml ya existe. Actualizando configuracion de Ruff...")
+                # Leer contenido existente
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    existing_config = toml.load(f)
+                    existing = f.read()
                 
-                # Actualizar o agregar sección ruff
-                if "tool" not in existing_config:
-                    existing_config["tool"] = {}
+                # Verificar si ya tiene configuración de ruff
+                if "[tool.ruff]" in existing:
+                    typer.echo("Configuracion de Ruff ya existe en pyproject.toml")
+                    return
                 
-                existing_config["tool"]["ruff"] = ruff_config["tool"]["ruff"]
-                
-                # Escribir configuración actualizada
-                with open(config_path, 'w', encoding='utf-8') as f:
-                    toml.dump(existing_config, f)
-                
-                typer.echo(f"✅ Configuración de Ruff actualizada en {config_path}")
+                # Agregar configuración al final
+                with open(config_path, 'a', encoding='utf-8') as f:
+                    f.write("\n\n" + config_content)
+                typer.echo("Configuracion de Ruff agregada a pyproject.toml")
             else:
-                # Crear nuevo archivo con configuración
+                # Crear nuevo archivo
                 with open(config_path, 'w', encoding='utf-8') as f:
-                    toml.dump(ruff_config, f)
-                
-                typer.echo(f"✅ Configuración de Ruff creada en {config_path}")
+                    f.write(config_content)
+                typer.echo("Configuracion de Ruff creada en pyproject.toml")
             
-            # Crear archivo .ruff-ignore si no existe
-            ruff_ignore_path = Path(".ruff-ignore")
-            if not ruff_ignore_path.exists():
-                RuffConfigGenerator.create_ruff_ignore_file(ruff_ignore_path)
+            # Crear .ruff-ignore si no existe
+            RuffConfigGenerator.create_ruff_ignore_file()
             
-            RuffConfigGenerator.print_config_summary()
+            typer.echo("\nConfiguracion aplicada:")
+            typer.echo("- Line-length: 88")
+            typer.echo("- Indent-width: 4")
+            typer.echo("- Reglas: E, F, I, B, UP")
+            typer.echo("- Formato: estilo Black")
             
         except Exception as e:
-            typer.echo(f"❌ Error generando configuración de Ruff: {e}")
-            raise
+            typer.echo(f"Error: {e}")
     
     @staticmethod
-    def create_ruff_ignore_file(filepath: Path):
+    def create_ruff_ignore_file():
         """Crea el archivo .ruff-ignore."""
-        ignore_content = """# Archivos y directorios a ignorar por Ruff
+        ignore_path = Path(".ruff-ignore")
+        if not ignore_path.exists():
+            ignore_content = '''# Archivos a ignorar por Ruff
 /alembic/versions/*
 /migrations/versions/*
-**/__pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-"""
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(ignore_content)
-        typer.echo(f"✅ Archivo .ruff-ignore creado")
-    
-    @staticmethod
-    def print_config_summary():
-        """Muestra un resumen de la configuración aplicada."""
-        typer.echo("\n📋 Configuración de Ruff aplicada:")
-        typer.echo("   • Selección de reglas: E, W, F, I, B, C4, UP, N, PL, RUF")
-        typer.echo("   • Longitud de línea: 88 caracteres")
-        typer.echo("   • Indentación: 4 espacios")
-        typer.echo("   • Comillas: dobles")
-        typer.echo("   • Excluye: migraciones, entornos virtuales, caches")
-    
-    @staticmethod
-    def validate_ruff_installed():
-        """Verifica si ruff está instalado."""
-        try:
-            import ruff
-            return True
-        except ImportError:
-            return False
+__pycache__/
+'''
+            with open(ignore_path, 'w', encoding='utf-8') as f:
+                f.write(ignore_content)

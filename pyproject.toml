@@ -26,7 +26,7 @@ dependencies = [
     "fastapi-standalone-docs>=0.2.0",
     "questionary>=2.1.1",
     "ruff>=0.14.0",
-    "tomli>=2.0.0"
+    "toml>=0.10.2"
 ]
 
 [project.optional-dependencies]
