@@ -33,6 +33,7 @@ Perfect for rapid prototyping, MVP development, or enforcing consistent structur
 - `fam create <entity> [fields...]` → Generate a full CRUD module with customizable fields
 - `fam relation` → Create relationships between existing entities (One-to-Many, Many-to-Many, One-to-One)
 - `fam migrate [-m "message"]` → Auto-generate and apply database migrations with Alembic
+- `fam lint [--check|--fix|--format|--all]` → Lint and format code using Ruff (default: check + format)
 
 ### 🛡️ Offline API Documentation
 - **Zero CDN dependencies** - All Swagger UI and ReDoc assets served locally
