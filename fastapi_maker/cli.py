@@ -74,8 +74,8 @@ def relation():
         updater = RouterUpdater()
         updater.update_all_routers_descriptions()
     except ImportError as e:
-        typer.echo(f"❌ Error: {e}")
-        typer.echo("💡 Asegúrate de instalar las dependencias: pip install questionary")
+        typer.echo(f" Error: {e}")
+        typer.echo(" Asegúrate de instalar las dependencias: pip install questionary")
         raise typer.Exit(1)
     
 @app.command()
