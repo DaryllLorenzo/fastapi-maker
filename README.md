@@ -34,6 +34,7 @@ Perfect for rapid prototyping, MVP development, or enforcing consistent structur
 - `fam relation` → Create relationships between existing entities (One-to-Many, Many-to-Many, One-to-One)
 - `fam migrate [-m "message"]` → Auto-generate and apply database migrations with Alembic
 - `fam lint [--check|--fix|--format|--all]` → Lint and format code using Ruff (default: check + format)
+- `fam audit [--fix]` → Audit dependencies for security vulnerabilities using pip-audit (by default check or fix with flag)
 
 ### 🛡️ Offline API Documentation
 - **Zero CDN dependencies** - All Swagger UI and ReDoc assets served locally
