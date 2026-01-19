@@ -27,6 +27,7 @@ from fastapi_maker.generators.project_initializer import ProjectInitializer
 from fastapi_maker.generators.relation_manager import RelationManager
 from fastapi_maker.generators.router_update import RouterUpdater
 from fastapi_maker.utils.ruff_executor import RuffExecutor
+from fastapi_maker.generators.audit_manager import AuditManager
 
 app = typer.Typer(
     name="fam",
@@ -114,6 +115,30 @@ def lint(
         format_cmd=format,
         all_ops=all
     )
+
+@app.command()
+def audit(
+    fix: bool = typer.Option(
+        False, "--fix", "-f", 
+        help="Intenta actualizar dependencias vulnerables automáticamente"
+    )
+):
+    """
+    Audita dependencias del proyecto usando pip-audit.
+    
+    Por defecto solo verifica. Usa --fix para intentar correcciones.
+    
+    Ejemplos:
+        fam audit          # Solo verifica
+        fam audit --fix    # Verifica e intenta corregir
+    """
+    try:  
+        auditor = AuditManager(fix_mode=fix)
+        if auditor.run_audit():
+            raise typer.Exit(code=1) 
+    except Exception as e:
+        typer.echo(f"Error al ejecutar comando {e}")
+        raise typer.Exit(code=1)
 
 if __name__ == "__main__":
     app()
